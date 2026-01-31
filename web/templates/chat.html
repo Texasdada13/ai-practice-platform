@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}AI Consultant{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 1.5rem 0;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h3 mb-1"><i class="fas fa-robot me-2"></i>AI Consultant</h1>
+                <p class="mb-0 opacity-75">Powered by Claude - Your AI strategy advisor</p>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-light text-dark">
+                    <i class="fas fa-building me-1"></i>{{ organization }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Sidebar - Mode Selection -->
+        <div class="col-lg-3 mb-4">
+            <div class="sidebar">
+                <h6 class="text-uppercase text-muted small mb-3">Conversation Mode</h6>
+                <div id="modeButtons">
+                    <button class="sidebar-link w-100 text-start mode-btn active" data-mode="general">
+                        <i class="fas fa-comments"></i>General Chat
+                    </button>
+                    <button class="sidebar-link w-100 text-start mode-btn" data-mode="assessment_guide">
+                        <i class="fas fa-clipboard-check"></i>Assessment Guide
+                    </button>
+                    <button class="sidebar-link w-100 text-start mode-btn" data-mode="results_discussion">
+                        <i class="fas fa-chart-bar"></i>Results Discussion
+                    </button>
+                    <button class="sidebar-link w-100 text-start mode-btn" data-mode="roadmap_planning">
+                        <i class="fas fa-road"></i>Roadmap Planning
+                    </button>
+                    <button class="sidebar-link w-100 text-start mode-btn" data-mode="framework_builder">
+                        <i class="fas fa-sitemap"></i>Framework Builder
+                    </button>
+                    <button class="sidebar-link w-100 text-start mode-btn" data-mode="use_case_discovery">
+                        <i class="fas fa-lightbulb"></i>Use Case Discovery
+                    </button>
+                </div>
+
+                <hr class="my-3">
+
+                <h6 class="text-uppercase text-muted small mb-3">Suggested Prompts</h6>
+                <div id="suggestedPrompts" class="d-flex flex-wrap gap-2">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-message me-2"></i>Chat</span>
+                    <button class="btn btn-sm btn-outline-secondary" id="clearChat">
+                        <i class="fas fa-trash-alt me-1"></i>Clear
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="text-center py-5 text-muted" id="welcomeMessage">
+                                <i class="fas fa-robot fa-3x mb-3"></i>
+                                <h5>Welcome to AI Consultant</h5>
+                                <p class="mb-0">Start a conversation about your AI strategy, or select a mode to get specialized guidance.</p>
+                            </div>
+                        </div>
+                        <div class="chat-input-container p-3">
+                            <form id="chatForm" class="d-flex gap-2">
+                                <input type="text" class="form-control form-control-lg" id="messageInput"
+                                       placeholder="Ask about AI strategy, governance, use cases..." autofocus>
+                                <button type="submit" class="btn btn-patriot px-4" id="sendBtn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Context Cards -->
+            <div class="row g-3 mt-3">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-pie fa-2x text-primary mb-2"></i>
+                            <h6>Your Score</h6>
+                            <span class="h3 text-primary">{{ assessment.result.overall_score|default(0)|format_score }}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-layer-group fa-2x text-primary mb-2"></i>
+                            <h6>Maturity Level</h6>
+                            <span class="maturity-badge maturity-{{ (assessment.result.maturity_level|default('exploring'))|lower }}">
+                                {{ assessment.result.maturity_level|default('Exploring') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-industry fa-2x text-primary mb-2"></i>
+                            <h6>Sector</h6>
+                            <span class="text-capitalize">{{ assessment.result.sector|default('General')|replace('_', ' ') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let sessionId = null;
+let currentMode = 'general';
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Start chat session
+    await startChatSession();
+
+    // Chat form submission
+    document.getElementById('chatForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await sendMessage();
+    });
+
+    // Mode buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const mode = this.dataset.mode;
+            await changeMode(mode);
+        });
+    });
+
+    // Clear chat
+    document.getElementById('clearChat').addEventListener('click', async function() {
+        await startChatSession();
+        document.getElementById('chatMessages').innerHTML = `
+            <div class="text-center py-5 text-muted" id="welcomeMessage">
+                <i class="fas fa-robot fa-3x mb-3"></i>
+                <h5>Chat Cleared</h5>
+                <p class="mb-0">Start a new conversation.</p>
+            </div>
+        `;
+    });
+});
+
+async function startChatSession() {
+    try {
+        const response = await apiCall('/api/chat/start', 'POST', { mode: currentMode });
+        sessionId = response.session_id;
+        updateSuggestedPrompts(response.suggested_prompts || []);
+    } catch (error) {
+        console.error('Failed to start chat session:', error);
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Clear input and remove welcome message
+    input.value = '';
+    const welcome = document.getElementById('welcomeMessage');
+    if (welcome) welcome.remove();
+
+    // Add user message
+    addMessage(message, 'user');
+
+    // Show typing indicator
+    const typingId = addTypingIndicator();
+
+    try {
+        const response = await apiCall('/api/chat/message', 'POST', { message });
+        removeTypingIndicator(typingId);
+
+        if (response.error) {
+            addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+        } else {
+            addMessage(response.response || response.message, 'assistant');
+        }
+    } catch (error) {
+        removeTypingIndicator(typingId);
+        addMessage('Connection error. Please check your network and try again.', 'assistant');
+    }
+}
+
+async function changeMode(mode) {
+    // Update UI
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    currentMode = mode;
+
+    try {
+        const response = await apiCall('/api/chat/mode', 'POST', { mode });
+        updateSuggestedPrompts(response.suggested_prompts || []);
+
+        // Add mode change message
+        const modeNames = {
+            'general': 'General Chat',
+            'assessment_guide': 'Assessment Guide',
+            'results_discussion': 'Results Discussion',
+            'roadmap_planning': 'Roadmap Planning',
+            'framework_builder': 'Framework Builder',
+            'use_case_discovery': 'Use Case Discovery'
+        };
+
+        const welcome = document.getElementById('welcomeMessage');
+        if (welcome) welcome.remove();
+
+        addSystemMessage(`Switched to ${modeNames[mode]} mode`);
+    } catch (error) {
+        console.error('Failed to change mode:', error);
+    }
+}
+
+function addMessage(content, type) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${type}`;
+    messageDiv.innerHTML = formatMessage(content);
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function addSystemMessage(content) {
+    const messagesDiv = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'text-center text-muted small my-2';
+    messageDiv.innerHTML = `<i class="fas fa-info-circle me-1"></i>${content}`;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function addTypingIndicator() {
+    const messagesDiv = document.getElementById('chatMessages');
+    const id = 'typing-' + Date.now();
+    const indicator = document.createElement('div');
+    indicator.id = id;
+    indicator.className = 'chat-message assistant';
+    indicator.innerHTML = '<span class="loading-spinner"></span> Thinking...';
+    messagesDiv.appendChild(indicator);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    const indicator = document.getElementById(id);
+    if (indicator) indicator.remove();
+}
+
+function formatMessage(content) {
+    // Basic markdown-like formatting
+    return content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+}
+
+function updateSuggestedPrompts(prompts) {
+    const container = document.getElementById('suggestedPrompts');
+    container.innerHTML = '';
+
+    (prompts || []).slice(0, 4).forEach(prompt => {
+        const chip = document.createElement('span');
+        chip.className = 'mode-chip';
+        chip.textContent = prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt;
+        chip.title = prompt;
+        chip.addEventListener('click', () => {
+            document.getElementById('messageInput').value = prompt;
+            document.getElementById('messageInput').focus();
+        });
+        container.appendChild(chip);
+    });
+}
+</script>
+{% endblock %}

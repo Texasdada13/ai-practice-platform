@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Document Generation{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 2rem 0;">
+    <div class="container">
+        <h1 class="mb-2"><i class="fas fa-file-alt me-2"></i>Document Generation</h1>
+        <p class="lead mb-0">Generate comprehensive AI strategy and policy documents for {{ organization }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Document Categories -->
+    <div class="row g-4 mb-4">
+        <!-- Strategy Documents -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-chess me-2"></i>Strategy Documents
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('executive_summary')">
+                            <div>
+                                <h6 class="mb-1">Executive Summary</h6>
+                                <small class="text-muted">High-level overview for leadership</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('ai_strategy')">
+                            <div>
+                                <h6 class="mb-1">AI Strategy Document</h6>
+                                <small class="text-muted">Comprehensive strategic plan</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('business_case')">
+                            <div>
+                                <h6 class="mb-1">Business Case</h6>
+                                <small class="text-muted">ROI analysis and justification</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('implementation_roadmap')">
+                            <div>
+                                <h6 class="mb-1">Implementation Roadmap</h6>
+                                <small class="text-muted">Detailed timeline and milestones</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Governance Documents -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-shield-alt me-2"></i>Governance & Policy
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('governance_framework')">
+                            <div>
+                                <h6 class="mb-1">Governance Framework</h6>
+                                <small class="text-muted">AI governance structure and policies</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('ethics_policy')">
+                            <div>
+                                <h6 class="mb-1">Ethics Policy</h6>
+                                <small class="text-muted">Ethical AI guidelines</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('data_strategy')">
+                            <div>
+                                <h6 class="mb-1">Data Strategy</h6>
+                                <small class="text-muted">Data governance and management</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('mlops_framework')">
+                            <div>
+                                <h6 class="mb-1">MLOps Framework</h6>
+                                <small class="text-muted">ML operations and lifecycle</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Documents -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-lightbulb me-2"></i>Use Case & Portfolio
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('use_case_portfolio')">
+                            <div>
+                                <h6 class="mb-1">Use Case Portfolio</h6>
+                                <small class="text-muted">Prioritized AI use cases</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-users me-2"></i>Change Management
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                onclick="generateDocument('change_management_plan')">
+                            <div>
+                                <h6 class="mb-1">Change Management Plan</h6>
+                                <small class="text-muted">Organizational change strategy</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Requirements -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-2"></i>Custom Requirements (Optional)
+        </div>
+        <div class="card-body">
+            <textarea class="form-control" id="customRequirements" rows="3"
+                      placeholder="Add any specific requirements, focus areas, or customizations for the document..."></textarea>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="card" id="loadingCard" style="display: none;">
+        <div class="card-body text-center py-5">
+            <span class="loading-spinner" style="width: 40px; height: 40px;"></span>
+            <h5 class="mt-3">Generating Document...</h5>
+            <p class="text-muted mb-0">Claude is crafting your customized document.</p>
+        </div>
+    </div>
+
+    <!-- Document Output -->
+    <div class="card" id="documentOutput" style="display: none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span id="documentTitle"><i class="fas fa-file-alt me-2"></i>Generated Document</span>
+            <div>
+                <span class="badge bg-light text-dark me-2" id="wordCount">0 words</span>
+                <button class="btn btn-sm btn-primary me-2" onclick="downloadDocument('md')">
+                    <i class="fas fa-download me-1"></i>Markdown
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="closeDocument()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="documentContent" class="document-preview" style="max-height: 600px; overflow-y: auto;">
+                <!-- Document content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Previously Generated -->
+    <div class="card" id="historyCard" style="display: none;">
+        <div class="card-header">
+            <i class="fas fa-history me-2"></i>Generated Documents
+        </div>
+        <div class="card-body">
+            <div class="list-group list-group-flush" id="documentHistory">
+                <!-- History items -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.document-preview {
+    background: #fafafa;
+    padding: 2rem;
+    border-radius: 8px;
+    font-family: Georgia, serif;
+    line-height: 1.8;
+}
+
+.document-preview h1 {
+    font-size: 1.75rem;
+    color: var(--patriot-primary);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--patriot-accent);
+    padding-bottom: 0.5rem;
+}
+
+.document-preview h2 {
+    font-size: 1.35rem;
+    color: var(--patriot-secondary);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.document-preview h3 {
+    font-size: 1.15rem;
+    color: #4a5568;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.document-preview p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.document-preview ul, .document-preview ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.document-preview li {
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDocument = null;
+const documentHistory = [];
+
+async function generateDocument(docType) {
+    const customRequirements = document.getElementById('customRequirements').value;
+
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('documentOutput').style.display = 'none';
+
+    try {
+        const response = await apiCall('/api/documents/generate', 'POST', {
+            type: docType,
+            custom_requirements: customRequirements || null
+        });
+        currentDocument = response;
+        displayDocument(response);
+        addToHistory(response);
+    } catch (error) {
+        console.error('Failed to generate document:', error);
+        alert('Failed to generate document. Please try again.');
+    } finally {
+        document.getElementById('loadingCard').style.display = 'none';
+    }
+}
+
+function displayDocument(doc) {
+    const typeNames = {
+        'executive_summary': 'Executive Summary',
+        'ai_strategy': 'AI Strategy Document',
+        'governance_framework': 'Governance Framework',
+        'ethics_policy': 'Ethics Policy',
+        'implementation_roadmap': 'Implementation Roadmap',
+        'business_case': 'Business Case',
+        'use_case_portfolio': 'Use Case Portfolio',
+        'data_strategy': 'Data Strategy',
+        'mlops_framework': 'MLOps Framework',
+        'change_management_plan': 'Change Management Plan'
+    };
+
+    document.getElementById('documentTitle').innerHTML =
+        `<i class="fas fa-file-alt me-2"></i>${doc.title || typeNames[doc.type] || 'Generated Document'}`;
+
+    document.getElementById('wordCount').textContent = `${doc.word_count || 0} words`;
+
+    // Render content (convert markdown-like to HTML)
+    const content = formatDocumentContent(doc.content || '');
+    document.getElementById('documentContent').innerHTML = content;
+
+    document.getElementById('documentOutput').style.display = 'block';
+    document.getElementById('documentOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatDocumentContent(content) {
+    // Basic markdown to HTML conversion
+    return content
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/^\* (.*$)/gim, '<li>$1</li>')
+        .replace(/^\- (.*$)/gim, '<li>$1</li>')
+        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace(/<\/li><br><li>/g, '</li><li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+}
+
+function addToHistory(doc) {
+    documentHistory.unshift({
+        id: doc.id,
+        title: doc.title,
+        type: doc.type,
+        generated_at: doc.generated_at,
+        word_count: doc.word_count
+    });
+
+    updateHistoryDisplay();
+}
+
+function updateHistoryDisplay() {
+    if (documentHistory.length === 0) {
+        document.getElementById('historyCard').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('historyCard').style.display = 'block';
+    const container = document.getElementById('documentHistory');
+
+    container.innerHTML = documentHistory.slice(0, 5).map(doc => `
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">${doc.title}</h6>
+                <small class="text-muted">${doc.word_count} words - ${new Date(doc.generated_at).toLocaleString()}</small>
+            </div>
+            <a href="/api/documents/${doc.id}/download" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-download"></i>
+            </a>
+        </div>
+    `).join('');
+}
+
+function downloadDocument(format) {
+    if (!currentDocument) return;
+
+    if (format === 'md') {
+        const content = `# ${currentDocument.title}\n\n${currentDocument.content}`;
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentDocument.title.replace(/\s+/g, '_')}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
+function closeDocument() {
+    document.getElementById('documentOutput').style.display = 'none';
+}
+</script>
+{% endblock %}

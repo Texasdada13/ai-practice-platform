@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}AI Roadmap{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 2rem 0;">
+    <div class="container">
+        <h1 class="mb-2"><i class="fas fa-road me-2"></i>AI Implementation Roadmap</h1>
+        <p class="lead mb-0">Generate a comprehensive roadmap for {{ organization }}'s AI journey</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Roadmap Configuration -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-cog me-2"></i>Roadmap Configuration
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Planning Horizon</label>
+                    <select class="form-select" id="horizonSelect">
+                        <option value="12 months">12 Months</option>
+                        <option value="18 months" selected>18 Months</option>
+                        <option value="24 months">24 Months</option>
+                        <option value="36 months">36 Months</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Priority Focus</label>
+                    <select class="form-select" id="prioritySelect">
+                        <option value="balanced" selected>Balanced</option>
+                        <option value="quick_wins">Quick Wins First</option>
+                        <option value="foundation">Foundation Building</option>
+                        <option value="innovation">Innovation Focus</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-patriot w-100" onclick="generateRoadmap()">
+                        <i class="fas fa-magic me-2"></i>Generate Roadmap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="card" id="loadingCard" style="display: none;">
+        <div class="card-body text-center py-5">
+            <span class="loading-spinner" style="width: 40px; height: 40px;"></span>
+            <h5 class="mt-3">Generating Roadmap...</h5>
+            <p class="text-muted mb-0">Building your customized AI implementation timeline.</p>
+        </div>
+    </div>
+
+    <!-- Roadmap Output -->
+    <div id="roadmapOutput" style="display: none;">
+        <!-- Summary Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="totalPhases">4</div>
+                        <div class="stat-label">Phases</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="totalInitiatives">0</div>
+                        <div class="stat-label">Initiatives</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="totalMilestones">0</div>
+                        <div class="stat-label">Milestones</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="horizonDisplay">18</div>
+                        <div class="stat-label">Month Horizon</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline View -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-stream me-2"></i>Implementation Timeline</span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary active" onclick="showView('timeline')">Timeline</button>
+                    <button class="btn btn-outline-primary" onclick="showView('gantt')">Gantt Chart</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="timelineView">
+                    <!-- Phases will be rendered here -->
+                </div>
+                <div id="ganttView" style="display: none;">
+                    <canvas id="ganttChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase Details -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-list-check me-2"></i>Phase Details
+            </div>
+            <div class="card-body" id="phaseDetails">
+                <!-- Phase details will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Download Options -->
+        <div class="cta-section">
+            <h5 class="mb-3">Export Your Roadmap</h5>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <button class="btn btn-patriot" onclick="downloadRoadmap('json')">
+                    <i class="fas fa-file-code me-2"></i>Download JSON
+                </button>
+                <button class="btn btn-patriot-outline" onclick="downloadRoadmap('csv')">
+                    <i class="fas fa-file-csv me-2"></i>Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRoadmap = null;
+
+async function generateRoadmap() {
+    const horizon = document.getElementById('horizonSelect').value;
+    const priority = document.getElementById('prioritySelect').value;
+
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('roadmapOutput').style.display = 'none';
+
+    try {
+        const response = await apiCall('/api/roadmap/generate', 'POST', {
+            horizon,
+            priority
+        });
+        currentRoadmap = response;
+        displayRoadmap(response);
+    } catch (error) {
+        console.error('Failed to generate roadmap:', error);
+        alert('Failed to generate roadmap. Please try again.');
+    } finally {
+        document.getElementById('loadingCard').style.display = 'none';
+    }
+}
+
+function displayRoadmap(data) {
+    // Update summary stats
+    const phases = data.phases || [];
+    const initiatives = phases.reduce((sum, p) => sum + (p.initiatives || []).length, 0);
+    const milestones = phases.reduce((sum, p) => sum + (p.milestones || []).length, 0);
+
+    document.getElementById('totalPhases').textContent = phases.length;
+    document.getElementById('totalInitiatives').textContent = initiatives;
+    document.getElementById('totalMilestones').textContent = milestones;
+    document.getElementById('horizonDisplay').textContent = data.horizon?.replace(' months', '') || '18';
+
+    // Render timeline
+    renderTimeline(phases);
+
+    // Render phase details
+    renderPhaseDetails(phases);
+
+    // Show output
+    document.getElementById('roadmapOutput').style.display = 'block';
+    document.getElementById('roadmapOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderTimeline(phases) {
+    const container = document.getElementById('timelineView');
+    let html = '';
+
+    phases.forEach((phase, idx) => {
+        const phaseClass = phase.name.toLowerCase().replace(/\s+/g, '-');
+        html += `
+            <div class="timeline-item">
+                <span class="phase-badge phase-${phaseClass}">${phase.name}</span>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <h5 class="mb-0">${phase.name}</h5>
+                    <small class="text-muted">${phase.duration || ''}</small>
+                </div>
+                <p class="text-muted mt-2">${phase.focus || phase.description || ''}</p>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    ${(phase.initiatives || []).slice(0, 3).map(i =>
+                        `<span class="use-case-tag">${i.name || i}</span>`
+                    ).join('')}
+                    ${(phase.initiatives || []).length > 3 ?
+                        `<span class="use-case-tag">+${phase.initiatives.length - 3} more</span>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderPhaseDetails(phases) {
+    const container = document.getElementById('phaseDetails');
+    let html = '<div class="accordion" id="phaseAccordion">';
+
+    phases.forEach((phase, idx) => {
+        html += `
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button ${idx > 0 ? 'collapsed' : ''}" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#phase${idx}">
+                        <span class="phase-badge phase-${phase.name.toLowerCase().replace(/\s+/g, '-')} me-3">
+                            Phase ${idx + 1}
+                        </span>
+                        ${phase.name} - ${phase.duration || ''}
+                    </button>
+                </h2>
+                <div id="phase${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}"
+                     data-bs-parent="#phaseAccordion">
+                    <div class="accordion-body">
+                        <p>${phase.focus || phase.description || ''}</p>
+
+                        ${phase.initiatives && phase.initiatives.length ? `
+                            <h6 class="mt-3"><i class="fas fa-tasks me-2"></i>Key Initiatives</h6>
+                            <ul class="mb-3">
+                                ${phase.initiatives.map(i => `
+                                    <li>
+                                        <strong>${i.name || i}</strong>
+                                        ${i.description ? `<br><small class="text-muted">${i.description}</small>` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${phase.milestones && phase.milestones.length ? `
+                            <h6 class="mt-3"><i class="fas fa-flag-checkered me-2"></i>Milestones</h6>
+                            <ul class="mb-3">
+                                ${phase.milestones.map(m => `<li>${m.name || m}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+
+                        ${phase.deliverables && phase.deliverables.length ? `
+                            <h6 class="mt-3"><i class="fas fa-box me-2"></i>Deliverables</h6>
+                            <ul class="mb-0">
+                                ${phase.deliverables.map(d => `<li>${d}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function showView(view) {
+    document.getElementById('timelineView').style.display = view === 'timeline' ? 'block' : 'none';
+    document.getElementById('ganttView').style.display = view === 'gantt' ? 'block' : 'none';
+
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view));
+    });
+
+    if (view === 'gantt' && currentRoadmap) {
+        renderGanttChart(currentRoadmap.phases || []);
+    }
+}
+
+function renderGanttChart(phases) {
+    const ctx = document.getElementById('ganttChart').getContext('2d');
+
+    const labels = phases.map(p => p.name);
+    const data = phases.map((p, idx) => ({
+        x: [idx * 3, idx * 3 + 3], // Simplified timing
+        y: p.name
+    }));
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Duration',
+                data: phases.map((p, i) => 3), // 3 months per phase simplified
+                backgroundColor: ['#c53030', '#c05621', '#276749', '#2b6cb0'],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Months' }
+                }
+            }
+        }
+    });
+}
+
+function downloadRoadmap(format) {
+    if (!currentRoadmap) return;
+
+    if (format === 'json') {
+        const content = JSON.stringify(currentRoadmap, null, 2);
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ai-roadmap.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    } else if (format === 'csv') {
+        let csv = 'Phase,Duration,Initiative,Description\n';
+        (currentRoadmap.phases || []).forEach(phase => {
+            (phase.initiatives || []).forEach(init => {
+                csv += `"${phase.name}","${phase.duration}","${init.name || init}","${init.description || ''}"\n`;
+            });
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ai-roadmap.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}AI Frameworks{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 2rem 0;">
+    <div class="container">
+        <h1 class="mb-2"><i class="fas fa-sitemap me-2"></i>AI Framework Generator</h1>
+        <p class="lead mb-0">Build comprehensive AI governance, strategy, and ethics frameworks tailored to {{ organization }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Framework Cards -->
+    <div class="row g-4 mb-4">
+        <!-- AI Strategy Framework -->
+        <div class="col-lg-4">
+            <div class="card h-100 framework-card">
+                <div class="card-header">
+                    <i class="fas fa-chess me-2 text-primary"></i>AI Strategy Framework
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Define your AI vision, strategic pillars, and implementation approach aligned with business objectives.</p>
+                    <ul class="small text-muted mb-4">
+                        <li>Strategic vision & objectives</li>
+                        <li>Key initiatives & milestones</li>
+                        <li>Resource requirements</li>
+                        <li>Success metrics</li>
+                    </ul>
+                    <button class="btn btn-patriot w-100" onclick="generateFramework('strategy')">
+                        <i class="fas fa-magic me-2"></i>Generate Strategy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Governance Framework -->
+        <div class="col-lg-4">
+            <div class="card h-100 framework-card">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt me-2 text-success"></i>AI Governance Framework
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Establish policies, processes, and controls for responsible AI development and deployment.</p>
+                    <ul class="small text-muted mb-4">
+                        <li>Governance structure & roles</li>
+                        <li>Policy framework</li>
+                        <li>Risk management</li>
+                        <li>Compliance controls</li>
+                    </ul>
+                    <button class="btn btn-patriot w-100" onclick="generateFramework('governance')">
+                        <i class="fas fa-magic me-2"></i>Generate Governance
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ethics Framework -->
+        <div class="col-lg-4">
+            <div class="card h-100 framework-card">
+                <div class="card-header">
+                    <i class="fas fa-balance-scale me-2 text-info"></i>AI Ethics Framework
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Define ethical principles and guidelines for responsible AI use across your organization.</p>
+                    <ul class="small text-muted mb-4">
+                        <li>Core ethical principles</li>
+                        <li>Implementation guidelines</li>
+                        <li>Assessment criteria</li>
+                        <li>Review processes</li>
+                    </ul>
+                    <button class="btn btn-patriot w-100" onclick="generateFramework('ethics')">
+                        <i class="fas fa-magic me-2"></i>Generate Ethics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Framework Output -->
+    <div class="card" id="frameworkOutput" style="display: none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span id="frameworkTitle"><i class="fas fa-file-alt me-2"></i>Generated Framework</span>
+            <div>
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="downloadFramework()">
+                    <i class="fas fa-download me-1"></i>Download
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="closeFramework()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body" id="frameworkContent">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="card" id="loadingCard" style="display: none;">
+        <div class="card-body text-center py-5">
+            <span class="loading-spinner" style="width: 40px; height: 40px;"></span>
+            <h5 class="mt-3">Generating Framework...</h5>
+            <p class="text-muted mb-0">This may take a moment as we analyze your assessment data.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentFramework = null;
+
+async function generateFramework(type) {
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('frameworkOutput').style.display = 'none';
+
+    try {
+        const response = await apiCall(`/api/frameworks/${type}`, 'POST');
+        currentFramework = response;
+        displayFramework(type, response);
+    } catch (error) {
+        console.error('Failed to generate framework:', error);
+        alert('Failed to generate framework. Please try again.');
+    } finally {
+        document.getElementById('loadingCard').style.display = 'none';
+    }
+}
+
+function displayFramework(type, data) {
+    const titles = {
+        'strategy': 'AI Strategy Framework',
+        'governance': 'AI Governance Framework',
+        'ethics': 'AI Ethics Framework'
+    };
+
+    document.getElementById('frameworkTitle').innerHTML = `<i class="fas fa-file-alt me-2"></i>${titles[type]}`;
+
+    let html = '';
+
+    if (type === 'strategy') {
+        html = renderStrategyFramework(data);
+    } else if (type === 'governance') {
+        html = renderGovernanceFramework(data);
+    } else if (type === 'ethics') {
+        html = renderEthicsFramework(data);
+    }
+
+    document.getElementById('frameworkContent').innerHTML = html;
+    document.getElementById('frameworkOutput').style.display = 'block';
+    document.getElementById('frameworkOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderStrategyFramework(data) {
+    let html = `
+        <div class="mb-4">
+            <h4>${data.organization_name || 'Organization'} AI Strategy</h4>
+            <p class="lead">${data.vision || 'Strategic vision for AI transformation'}</p>
+        </div>
+    `;
+
+    if (data.strategic_pillars) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-columns me-2"></i>Strategic Pillars</h5>';
+        html += '<div class="row g-3">';
+        data.strategic_pillars.forEach(pillar => {
+            html += `
+                <div class="col-md-6">
+                    <div class="dimension-card">
+                        <h6>${pillar.name}</h6>
+                        <p class="small text-muted mb-2">${pillar.description}</p>
+                        <ul class="small mb-0">
+                            ${(pillar.initiatives || []).map(i => `<li>${i}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+
+    if (data.roadmap_phases) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-road me-2"></i>Implementation Phases</h5>';
+        data.roadmap_phases.forEach(phase => {
+            html += `
+                <div class="timeline-item">
+                    <span class="phase-badge phase-${phase.name.toLowerCase().replace(' ', '-')}">${phase.name}</span>
+                    <h6 class="mt-2">${phase.duration}</h6>
+                    <p class="small text-muted">${phase.focus}</p>
+                </div>
+            `;
+        });
+    }
+
+    return html;
+}
+
+function renderGovernanceFramework(data) {
+    let html = `
+        <div class="mb-4">
+            <h4>${data.organization_name || 'Organization'} AI Governance Framework</h4>
+            <p class="text-muted">Framework Version: ${data.version || '1.0'}</p>
+        </div>
+    `;
+
+    if (data.governance_structure) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-sitemap me-2"></i>Governance Structure</h5>';
+        html += '<div class="row g-3">';
+        (data.governance_structure.roles || []).forEach(role => {
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="dimension-card">
+                        <h6>${role.title}</h6>
+                        <p class="small text-muted">${role.responsibilities}</p>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+
+    if (data.policies) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-file-contract me-2"></i>Key Policies</h5>';
+        html += '<div class="accordion" id="policyAccordion">';
+        (data.policies || []).forEach((policy, idx) => {
+            html += `
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${idx > 0 ? 'collapsed' : ''}" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#policy${idx}">
+                            ${policy.name}
+                        </button>
+                    </h2>
+                    <div id="policy${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}"
+                         data-bs-parent="#policyAccordion">
+                        <div class="accordion-body">
+                            <p>${policy.purpose}</p>
+                            <ul class="small">
+                                ${(policy.key_provisions || []).map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+
+    return html;
+}
+
+function renderEthicsFramework(data) {
+    let html = `
+        <div class="mb-4">
+            <h4>${data.organization_name || 'Organization'} AI Ethics Framework</h4>
+            <p class="lead">${data.ethics_statement || 'Commitment to responsible and ethical AI'}</p>
+        </div>
+    `;
+
+    if (data.principles) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-balance-scale me-2"></i>Core Ethical Principles</h5>';
+        html += '<div class="row g-3">';
+        data.principles.forEach(principle => {
+            const icons = {
+                'Fairness': 'balance-scale',
+                'Transparency': 'eye',
+                'Privacy': 'lock',
+                'Accountability': 'user-check',
+                'Safety': 'shield-alt',
+                'Human Oversight': 'users',
+                'Beneficence': 'heart'
+            };
+            html += `
+                <div class="col-md-6">
+                    <div class="dimension-card">
+                        <h6><i class="fas fa-${icons[principle.name] || 'check-circle'} me-2 text-primary"></i>${principle.name}</h6>
+                        <p class="small text-muted mb-2">${principle.description}</p>
+                        <div class="small">
+                            <strong>Guidelines:</strong>
+                            <ul class="mb-0">
+                                ${(principle.guidelines || []).slice(0, 3).map(g => `<li>${g}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+
+    if (data.implementation_guidance) {
+        html += '<h5 class="mt-4 mb-3"><i class="fas fa-tasks me-2"></i>Implementation Guidance</h5>';
+        html += '<div class="dimension-card">';
+        html += `<p>${data.implementation_guidance.overview || ''}</p>`;
+        if (data.implementation_guidance.steps) {
+            html += '<ol>';
+            data.implementation_guidance.steps.forEach(step => {
+                html += `<li class="mb-2">${step}</li>`;
+            });
+            html += '</ol>';
+        }
+        html += '</div>';
+    }
+
+    return html;
+}
+
+function downloadFramework() {
+    if (!currentFramework) return;
+
+    const content = JSON.stringify(currentFramework, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ai-framework.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function closeFramework() {
+    document.getElementById('frameworkOutput').style.display = 'none';
+}
+</script>
+{% endblock %}

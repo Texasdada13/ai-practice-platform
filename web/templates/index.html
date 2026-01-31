@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}AI Practice Platform{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 4rem 0;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="mb-3">AI Practice Maturity Platform</h1>
+                <p class="lead mb-4">
+                    Assess your AI readiness, build governance frameworks, and create comprehensive
+                    implementation roadmaps with our Claude-powered platform.
+                </p>
+                <div class="d-flex gap-4 flex-wrap mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chart-line me-2 text-info fa-lg"></i>
+                        <span>AI Readiness Assessment</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-robot me-2 text-info fa-lg"></i>
+                        <span>Claude-Powered Chat</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-sitemap me-2 text-info fa-lg"></i>
+                        <span>Framework Builder</span>
+                    </div>
+                </div>
+                <a href="#start" class="btn btn-light btn-lg px-4">
+                    <i class="fas fa-rocket me-2"></i>Get Started Free
+                </a>
+            </div>
+            <div class="col-lg-5 text-center mt-4 mt-lg-0">
+                <div class="bg-white bg-opacity-10 rounded-4 p-4">
+                    <i class="fas fa-brain fa-5x mb-3 text-info"></i>
+                    <h4>Enterprise AI Solutions</h4>
+                    <p class="mb-0 small opacity-75">Comprehensive tools for AI transformation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Features -->
+<div class="container mb-5">
+    <div class="text-center mb-5">
+        <h2 class="mb-3">Complete AI Practice Toolkit</h2>
+        <p class="text-muted col-lg-8 mx-auto">
+            Everything you need to assess, plan, and execute your organization's AI journey.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-clipboard-check fa-3x text-primary mb-3"></i>
+                <h5>AI Readiness Assessment</h5>
+                <p class="text-muted mb-0">
+                    50+ questions across 5 dimensions with industry benchmarks and maturity scoring.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-comments fa-3x text-primary mb-3"></i>
+                <h5>AI Strategy Consultant</h5>
+                <p class="text-muted mb-0">
+                    Chat with Claude about your AI strategy, get personalized recommendations.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-sitemap fa-3x text-primary mb-3"></i>
+                <h5>Framework Generator</h5>
+                <p class="text-muted mb-0">
+                    Build AI strategy, governance, and ethics frameworks tailored to your needs.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-road fa-3x text-primary mb-3"></i>
+                <h5>Implementation Roadmap</h5>
+                <p class="text-muted mb-0">
+                    Generate phased implementation plans with milestones and deliverables.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-lightbulb fa-3x text-primary mb-3"></i>
+                <h5>Use Case Prioritization</h5>
+                <p class="text-muted mb-0">
+                    Discover and prioritize AI use cases with value-feasibility analysis.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                <h5>Document Generation</h5>
+                <p class="text-muted mb-0">
+                    Generate comprehensive strategy, governance, and policy documents.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Start Assessment Form -->
+<div class="container mb-5" id="start">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-4 p-lg-5">
+                    <h3 class="card-title mb-4 text-center">
+                        <i class="fas fa-rocket me-2 text-primary"></i>
+                        Start Your AI Readiness Assessment
+                    </h3>
+
+                    <form action="/start" method="POST" id="leadForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Full Name *</label>
+                                <input type="text" class="form-control form-control-lg" name="name" required
+                                       placeholder="John Smith">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Work Email *</label>
+                                <input type="email" class="form-control form-control-lg" name="email" required
+                                       placeholder="john@company.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Organization *</label>
+                                <input type="text" class="form-control form-control-lg" name="organization" required
+                                       placeholder="Acme Corporation">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Job Title</label>
+                                <input type="text" class="form-control form-control-lg" name="title"
+                                       placeholder="CIO / VP Technology">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Industry Sector *</label>
+                                <select class="form-select form-select-lg" name="sector" required>
+                                    <option value="">Select your industry...</option>
+                                    <option value="financial_services">Financial Services</option>
+                                    <option value="government">Government / Public Sector</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="general">Other / Cross-Industry</option>
+                                </select>
+                                <div class="form-text">
+                                    Selecting your industry provides tailored questions and relevant benchmarks.
+                                </div>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-patriot btn-lg w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>
+                                    Begin Assessment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assessment Dimensions -->
+<div class="container mb-5">
+    <div class="card">
+        <div class="card-body p-4">
+            <h4 class="mb-4"><i class="fas fa-th-large me-2 text-primary"></i>Assessment Dimensions</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                            <i class="fas fa-database text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Data Maturity</h6>
+                            <small class="text-muted">Quality, governance, accessibility</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                            <i class="fas fa-server text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Technology Infrastructure</h6>
+                            <small class="text-muted">Cloud, compute, APIs, security</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                            <i class="fas fa-cogs text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Process & Operations</h6>
+                            <small class="text-muted">Automation, workflows, use cases</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Workforce & Culture</h6>
+                            <small class="text-muted">AI literacy, talent, leadership</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-primary bg-opacity-10 rounded p-2 me-3">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Governance & Compliance</h6>
+                            <small class="text-muted">Ethics, privacy, risk, regulations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- What You Get -->
+<div class="container mb-5">
+    <div class="text-center mb-4">
+        <h3>What You'll Receive</h3>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
+                <h5>AI Maturity Score</h5>
+                <p class="text-muted mb-0">
+                    Overall readiness score across 5 key dimensions with maturity classification.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-balance-scale fa-3x text-success mb-3"></i>
+                <h5>Industry Benchmark</h5>
+                <p class="text-muted mb-0">
+                    See how you compare to peers in your sector with detailed analysis.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 text-center p-4">
+                <i class="fas fa-file-download fa-3x text-success mb-3"></i>
+                <h5>Custom Documents</h5>
+                <p class="text-muted mb-0">
+                    Generate tailored strategy, governance, and implementation documents.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Powered By -->
+<div class="cta-section container mb-5">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h4 class="mb-2">Powered by Claude AI</h4>
+            <p class="text-muted mb-0">
+                Our platform leverages Anthropic's Claude to provide intelligent, context-aware
+                recommendations and document generation.
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="#start" class="btn btn-patriot">
+                <i class="fas fa-play me-2"></i>Start Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Practice Platform{% endblock %} | Patriot Tech Systems</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --patriot-primary: #1e3a5f;
+            --patriot-secondary: #2c5282;
+            --patriot-accent: #4299e1;
+            --patriot-light: #ebf8ff;
+            --patriot-gradient: linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #4299e1 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1a202c;
+        }
+
+        .navbar {
+            background: var(--patriot-gradient);
+            padding: 0.75rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: white !important;
+        }
+
+        .navbar-brand span {
+            color: var(--patriot-accent);
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px;
+            margin: 0 0.15rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .nav-link i {
+            margin-right: 0.4rem;
+        }
+
+        .hero-section {
+            background: var(--patriot-gradient);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .hero-section h1 {
+            font-weight: 800;
+            font-size: 2.25rem;
+        }
+
+        .hero-section .lead {
+            opacity: 0.9;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+
+        .btn-patriot {
+            background: var(--patriot-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-patriot:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .btn-patriot-outline {
+            border: 2px solid var(--patriot-primary);
+            color: var(--patriot-primary);
+            background: transparent;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-patriot-outline:hover {
+            background: var(--patriot-primary);
+            color: white;
+        }
+
+        .btn-patriot-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .progress-bar {
+            background: var(--patriot-gradient);
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            background: white;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 6px;
+            background: var(--patriot-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--patriot-primary);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .maturity-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .maturity-exploring { background: #fed7d7; color: #c53030; }
+        .maturity-experimenting { background: #feebc8; color: #c05621; }
+        .maturity-scaling { background: #c6f6d5; color: #276749; }
+        .maturity-optimizing { background: #bee3f8; color: #2b6cb0; }
+
+        .dimension-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--patriot-accent);
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .option-button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-button:hover {
+            border-color: var(--patriot-accent);
+            background: var(--patriot-light);
+        }
+
+        .option-button.selected {
+            border-color: var(--patriot-primary);
+            background: var(--patriot-light);
+        }
+
+        .option-value {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            background: var(--patriot-primary);
+            color: white;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .benchmark-bar {
+            height: 24px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benchmark-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+
+        .benchmark-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: #1a202c;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: sticky;
+            top: 1rem;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background: var(--patriot-light);
+            color: var(--patriot-primary);
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            margin-right: 0.5rem;
+        }
+
+        .chat-container {
+            height: calc(100vh - 300px);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .chat-message {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .chat-message.user {
+            background: var(--patriot-primary);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.assistant {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-container {
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .framework-card {
+            border-left: 4px solid var(--patriot-accent);
+            transition: all 0.2s;
+        }
+
+        .framework-card:hover {
+            border-left-color: var(--patriot-primary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top-color: var(--patriot-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--patriot-primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .quick-action:hover {
+            border-color: var(--patriot-accent);
+            transform: translateX(4px);
+            color: inherit;
+        }
+
+        .quick-action i {
+            font-size: 1.5rem;
+            color: var(--patriot-primary);
+            margin-right: 1rem;
+        }
+
+        footer {
+            background: var(--patriot-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        footer a {
+            color: var(--patriot-accent);
+        }
+
+        .cta-section {
+            background: var(--patriot-light);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 10px;
+        }
+
+        .dropdown-item {
+            padding: 0.6rem 1.25rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--patriot-light);
+        }
+
+        .mode-chip {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            background: var(--patriot-light);
+            color: var(--patriot-primary);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .mode-chip:hover, .mode-chip.active {
+            background: var(--patriot-primary);
+            color: white;
+        }
+
+        .priority-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 1rem;
+            aspect-ratio: 1;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .matrix-quadrant {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+        }
+
+        .matrix-quadrant.quick-wins { border-color: #48bb78; }
+        .matrix-quadrant.strategic { border-color: #4299e1; }
+        .matrix-quadrant.low-priority { border-color: #a0aec0; }
+        .matrix-quadrant.reconsider { border-color: #f6ad55; }
+
+        .use-case-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--patriot-light);
+            color: var(--patriot-primary);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin: 0.15rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 1.5rem;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .timeline-item:last-child {
+            border-left-color: transparent;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--patriot-primary);
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .phase-foundation { background: #fed7d7; color: #c53030; }
+        .phase-buildout { background: #feebc8; color: #c05621; }
+        .phase-acceleration { background: #c6f6d5; color: #276749; }
+        .phase-optimization { background: #bee3f8; color: #2b6cb0; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-brain me-2"></i>
+                AI Practice<span>Platform</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if session.get('assessment_id') %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'chat_page' %}active{% endif %}" href="{{ url_for('chat_page') }}">
+                            <i class="fas fa-comments"></i>AI Chat
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'frameworks_page' %}active{% endif %}" href="{{ url_for('frameworks_page') }}">
+                            <i class="fas fa-sitemap"></i>Frameworks
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'roadmap_page' %}active{% endif %}" href="{{ url_for('roadmap_page') }}">
+                            <i class="fas fa-road"></i>Roadmap
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'use_cases_page' %}active{% endif %}" href="{{ url_for('use_cases_page') }}">
+                            <i class="fas fa-lightbulb"></i>Use Cases
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'documents_page' %}active{% endif %}" href="{{ url_for('documents_page') }}">
+                            <i class="fas fa-file-alt"></i>Documents
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home"></i>Home
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-brain me-2"></i>AI Practice Platform</h5>
+                    <p class="mb-0">By Patriot Tech Systems Consulting LLC</p>
+                    <p class="small text-light opacity-75">Enterprise AI readiness, strategy, and implementation solutions.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">
+                        <a href="mailto:info@patriottechsystems.com">info@patriottechsystems.com</a>
+                    </p>
+                    <p class="mb-0">
+                        <a href="https://www.patriottechsystems.com" target="_blank">www.patriottechsystems.com</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global utility functions
+        function showLoading(element) {
+            element.innerHTML = '<span class="loading-spinner"></span> Loading...';
+            element.disabled = true;
+        }
+
+        function hideLoading(element, originalText) {
+            element.innerHTML = originalText;
+            element.disabled = false;
+        }
+
+        async function apiCall(url, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) options.body = JSON.stringify(data);
+            const response = await fetch(url, options);
+            return response.json();
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Use Case Prioritization{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 2rem 0;">
+    <div class="container">
+        <h1 class="mb-2"><i class="fas fa-lightbulb me-2"></i>AI Use Case Prioritization</h1>
+        <p class="lead mb-0">Discover and prioritize AI opportunities for {{ organization }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Prioritization Controls -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-sliders-h me-2"></i>Prioritization Settings
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Custom Use Cases (optional)</label>
+                    <textarea class="form-control" id="customUseCases" rows="2"
+                              placeholder="Enter additional use cases, one per line..."></textarea>
+                    <div class="form-text">We'll include sector-specific use cases automatically.</div>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-patriot w-100" onclick="prioritizeUseCases()">
+                        <i class="fas fa-magic me-2"></i>Analyze Use Cases
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="card" id="loadingCard" style="display: none;">
+        <div class="card-body text-center py-5">
+            <span class="loading-spinner" style="width: 40px; height: 40px;"></span>
+            <h5 class="mt-3">Analyzing Use Cases...</h5>
+            <p class="text-muted mb-0">Evaluating feasibility, value, and alignment with your AI readiness.</p>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsOutput" style="display: none;">
+        <!-- Summary Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="totalUseCases">0</div>
+                        <div class="stat-label">Use Cases</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value text-success" id="quickWinsCount">0</div>
+                        <div class="stat-label">Quick Wins</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value text-primary" id="strategicCount">0</div>
+                        <div class="stat-label">Strategic</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body stat-card">
+                        <div class="stat-value" id="avgScore">0</div>
+                        <div class="stat-label">Avg Priority Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Priority Matrix -->
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-th-large me-2"></i>Value-Feasibility Matrix
+                    </div>
+                    <div class="card-body">
+                        <div class="priority-matrix">
+                            <div class="matrix-quadrant strategic">
+                                <small class="text-muted d-block mb-2">High Value / Low Feasibility</small>
+                                <strong class="text-primary">Strategic Bets</strong>
+                                <div id="strategicQuadrant" class="mt-2"></div>
+                            </div>
+                            <div class="matrix-quadrant quick-wins">
+                                <small class="text-muted d-block mb-2">High Value / High Feasibility</small>
+                                <strong class="text-success">Quick Wins</strong>
+                                <div id="quickWinsQuadrant" class="mt-2"></div>
+                            </div>
+                            <div class="matrix-quadrant reconsider">
+                                <small class="text-muted d-block mb-2">Low Value / Low Feasibility</small>
+                                <strong class="text-warning">Reconsider</strong>
+                                <div id="reconsiderQuadrant" class="mt-2"></div>
+                            </div>
+                            <div class="matrix-quadrant low-priority">
+                                <small class="text-muted d-block mb-2">Low Value / High Feasibility</small>
+                                <strong class="text-secondary">Low Priority</strong>
+                                <div id="lowPriorityQuadrant" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prioritized List -->
+            <div class="col-lg-7">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list-ol me-2"></i>Prioritized Use Cases</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="downloadUseCases()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Use Case</th>
+                                        <th>Value</th>
+                                        <th>Feasibility</th>
+                                        <th>Priority</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="useCaseTable">
+                                    <!-- Filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Cards -->
+        <div class="row g-4 mt-3">
+            <div class="col-12">
+                <h5><i class="fas fa-star me-2 text-warning"></i>Top Recommended Use Cases</h5>
+            </div>
+            <div id="topUseCases" class="col-12">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPortfolio = null;
+
+async function prioritizeUseCases() {
+    const customText = document.getElementById('customUseCases').value;
+    const customUseCases = customText.split('\n').filter(u => u.trim()).map(u => ({
+        name: u.trim(),
+        description: ''
+    }));
+
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('resultsOutput').style.display = 'none';
+
+    try {
+        const response = await apiCall('/api/use-cases/prioritize', 'POST', {
+            custom_use_cases: customUseCases
+        });
+        currentPortfolio = response;
+        displayResults(response);
+    } catch (error) {
+        console.error('Failed to prioritize use cases:', error);
+        alert('Failed to prioritize use cases. Please try again.');
+    } finally {
+        document.getElementById('loadingCard').style.display = 'none';
+    }
+}
+
+function displayResults(data) {
+    const useCases = data.prioritized_use_cases || data.use_cases || [];
+
+    // Summary stats
+    document.getElementById('totalUseCases').textContent = useCases.length;
+
+    const quickWins = useCases.filter(u => u.quadrant === 'quick_wins' || (u.value_score >= 70 && u.feasibility_score >= 70));
+    const strategic = useCases.filter(u => u.quadrant === 'strategic' || (u.value_score >= 70 && u.feasibility_score < 70));
+
+    document.getElementById('quickWinsCount').textContent = quickWins.length;
+    document.getElementById('strategicCount').textContent = strategic.length;
+
+    const avgScore = useCases.length ?
+        Math.round(useCases.reduce((sum, u) => sum + (u.priority_score || 0), 0) / useCases.length) : 0;
+    document.getElementById('avgScore').textContent = avgScore;
+
+    // Render matrix quadrants
+    renderQuadrants(useCases);
+
+    // Render table
+    renderTable(useCases);
+
+    // Render top use cases
+    renderTopUseCases(useCases.slice(0, 3));
+
+    document.getElementById('resultsOutput').style.display = 'block';
+    document.getElementById('resultsOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderQuadrants(useCases) {
+    const quadrants = {
+        quick_wins: [],
+        strategic: [],
+        low_priority: [],
+        reconsider: []
+    };
+
+    useCases.forEach(uc => {
+        const value = uc.value_score || 50;
+        const feasibility = uc.feasibility_score || 50;
+
+        if (value >= 50 && feasibility >= 50) {
+            quadrants.quick_wins.push(uc);
+        } else if (value >= 50 && feasibility < 50) {
+            quadrants.strategic.push(uc);
+        } else if (value < 50 && feasibility >= 50) {
+            quadrants.low_priority.push(uc);
+        } else {
+            quadrants.reconsider.push(uc);
+        }
+    });
+
+    ['quick_wins', 'strategic', 'low_priority', 'reconsider'].forEach(q => {
+        const container = document.getElementById(q.replace('_', '') + 'Quadrant') ||
+                         document.getElementById(q === 'quick_wins' ? 'quickWinsQuadrant' :
+                                                q === 'low_priority' ? 'lowPriorityQuadrant' :
+                                                q + 'Quadrant');
+        if (container) {
+            container.innerHTML = quadrants[q].slice(0, 3).map(uc =>
+                `<span class="use-case-tag">${uc.name}</span>`
+            ).join('');
+            if (quadrants[q].length > 3) {
+                container.innerHTML += `<span class="use-case-tag">+${quadrants[q].length - 3}</span>`;
+            }
+        }
+    });
+}
+
+function renderTable(useCases) {
+    const tbody = document.getElementById('useCaseTable');
+    tbody.innerHTML = useCases.map((uc, idx) => `
+        <tr>
+            <td>${idx + 1}</td>
+            <td>
+                <strong>${uc.name}</strong>
+                ${uc.category ? `<br><small class="text-muted">${uc.category}</small>` : ''}
+            </td>
+            <td>
+                <div class="progress" style="width: 60px; height: 8px;">
+                    <div class="progress-bar bg-success" style="width: ${uc.value_score || 50}%"></div>
+                </div>
+                <small>${uc.value_score || 50}</small>
+            </td>
+            <td>
+                <div class="progress" style="width: 60px; height: 8px;">
+                    <div class="progress-bar bg-info" style="width: ${uc.feasibility_score || 50}%"></div>
+                </div>
+                <small>${uc.feasibility_score || 50}</small>
+            </td>
+            <td>
+                <span class="badge ${getPriorityBadgeClass(uc.priority_score || 50)}">
+                    ${uc.priority_score || 50}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getPriorityBadgeClass(score) {
+    if (score >= 75) return 'bg-success';
+    if (score >= 50) return 'bg-primary';
+    if (score >= 25) return 'bg-warning';
+    return 'bg-secondary';
+}
+
+function renderTopUseCases(useCases) {
+    const container = document.getElementById('topUseCases');
+    container.innerHTML = '<div class="row g-4">' + useCases.map((uc, idx) => `
+        <div class="col-md-4">
+            <div class="card h-100 framework-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-primary me-2">#${idx + 1}</span>
+                        <h6 class="mb-0">${uc.name}</h6>
+                    </div>
+                    <p class="small text-muted">${uc.description || 'AI-driven solution opportunity'}</p>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <small class="d-block text-muted">Value</small>
+                            <strong class="text-success">${uc.value_score || 50}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="d-block text-muted">Feasibility</small>
+                            <strong class="text-info">${uc.feasibility_score || 50}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="d-block text-muted">Priority</small>
+                            <strong class="text-primary">${uc.priority_score || 50}</strong>
+                        </div>
+                    </div>
+                    ${uc.requirements ? `
+                        <hr>
+                        <small class="text-muted">Key Requirements:</small>
+                        <ul class="small mb-0">
+                            ${(uc.requirements || []).slice(0, 2).map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('') + '</div>';
+}
+
+function downloadUseCases() {
+    if (!currentPortfolio) return;
+
+    const useCases = currentPortfolio.prioritized_use_cases || currentPortfolio.use_cases || [];
+    let csv = 'Rank,Name,Category,Value Score,Feasibility Score,Priority Score,Description\n';
+
+    useCases.forEach((uc, idx) => {
+        csv += `${idx + 1},"${uc.name}","${uc.category || ''}",${uc.value_score || 50},${uc.feasibility_score || 50},${uc.priority_score || 50},"${uc.description || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'use-case-priorities.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Auto-load on page load
+document.addEventListener('DOMContentLoaded', function() {
+    prioritizeUseCases();
+});
+</script>
+{% endblock %}

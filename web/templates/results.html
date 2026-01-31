@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Your AI Readiness Results{% endblock %}
+
+{% block content %}
+<div class="hero-section" style="padding: 2rem 0;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="mb-2">AI Readiness Assessment Results</h1>
+                <p class="lead mb-0 opacity-75">
+                    {{ result.organization_name }} | {{ benchmark.sector_name }}
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <button class="btn btn-light" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Overall Score Section -->
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-4">
+                    <h5 class="text-muted mb-4">Overall AI Readiness Score</h5>
+                    <div class="score-circle">
+                        <span class="score-value">{{ result.overall_score|format_score }}</span>
+                        <span class="score-label">out of 100</span>
+                    </div>
+                    <div class="mt-4">
+                        <span class="maturity-badge" style="background: {{ result.maturity_level.color }}20; color: {{ result.maturity_level.color }};">
+                            {{ result.maturity_level.icon }} {{ result.maturity_level.value }}
+                        </span>
+                    </div>
+                    <p class="text-muted mt-3 small">{{ result.maturity_level.description }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <h5 class="mb-4">
+                        <i class="fas fa-chart-radar me-2 text-primary"></i>
+                        Dimension Scores
+                    </h5>
+                    <canvas id="radarChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benchmark Comparison -->
+    <div class="card mt-4">
+        <div class="card-body p-4">
+            <h5 class="mb-4">
+                <i class="fas fa-balance-scale me-2 text-primary"></i>
+                Industry Benchmark Comparison
+            </h5>
+            <div class="row align-items-center mb-4">
+                <div class="col-md-3">
+                    <strong>Overall Score</strong>
+                </div>
+                <div class="col-md-7">
+                    <div class="benchmark-bar">
+                        <div class="benchmark-fill" style="width: {{ result.overall_score }}%; background: {{ result.overall_score|score_color }};"></div>
+                        <div class="benchmark-marker" style="left: {{ benchmark.overall.average }}%;" title="Industry Average"></div>
+                        <div class="benchmark-marker" style="left: {{ benchmark.overall.top_quartile }}%; background: #28a745;" title="Top Quartile"></div>
+                    </div>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="badge" style="background: {{ comparison.overall.position_color }};">
+                        {{ comparison.overall.position }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="row g-2 small text-muted mb-4">
+                <div class="col-auto"><span class="badge bg-secondary">Your Score: {{ result.overall_score|format_score }}</span></div>
+                <div class="col-auto"><span class="badge bg-dark">Industry Avg: {{ benchmark.overall.average }}</span></div>
+                <div class="col-auto"><span class="badge bg-success">Top Quartile: {{ benchmark.overall.top_quartile }}</span></div>
+            </div>
+
+            <hr>
+
+            <h6 class="mb-3">Dimension Breakdown</h6>
+            {% for dim_id, dim_score in result.dimension_scores.items() %}
+            <div class="row align-items-center mb-3">
+                <div class="col-md-3">
+                    <small class="fw-semibold">{{ dim_score.dimension_name }}</small>
+                </div>
+                <div class="col-md-6">
+                    <div class="benchmark-bar" style="height: 16px;">
+                        <div class="benchmark-fill" style="width: {{ dim_score.score }}%; background: {{ dim_score.score|score_color }};"></div>
+                        <div class="benchmark-marker" style="left: {{ benchmark.dimensions[dim_id].average }}%; height: 16px;" title="Average"></div>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <span class="badge" style="background: {{ comparison.dimensions[dim_id].position_color }};">
+                        {{ dim_score.score|format_score }} / 100
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Strengths & Improvements -->
+    <div class="row g-4 mt-2">
+        <div class="col-md-6">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-check-circle me-2"></i>Top Strengths
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for strength in result.top_strengths %}
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            {{ strength }}
+                        </li>
+                        {% endfor %}
+                        {% if not result.top_strengths %}
+                        <li class="text-muted">Complete the assessment to see your strengths</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Areas for Improvement
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for improvement in result.top_improvements %}
+                        <li class="mb-2">
+                            <i class="fas fa-arrow-up text-warning me-2"></i>
+                            {{ improvement }}
+                        </li>
+                        {% endfor %}
+                        {% if not result.top_improvements %}
+                        <li class="text-muted">Great job! Few areas need improvement</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-road me-2"></i>Recommended Actions
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for rec in result.recommendations %}
+                <div class="col-md-6 mb-3">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <span class="badge bg-primary rounded-circle" style="width: 28px; height: 28px; line-height: 20px;">
+                                {{ loop.index }}
+                            </span>
+                        </div>
+                        <div>{{ rec }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Maturity Journey -->
+    <div class="card mt-4">
+        <div class="card-body p-4">
+            <h5 class="mb-4">
+                <i class="fas fa-route me-2 text-primary"></i>
+                AI Maturity Journey
+            </h5>
+            <div class="row text-center">
+                <div class="col-3">
+                    <div class="p-3 rounded {% if result.maturity_level.value == 'Exploring' %}bg-danger bg-opacity-25 border border-danger{% else %}bg-light{% endif %}">
+                        <i class="fas fa-search fa-2x mb-2 {% if result.maturity_level.value == 'Exploring' %}text-danger{% else %}text-muted{% endif %}"></i>
+                        <h6 class="mb-1">Exploring</h6>
+                        <small class="text-muted">0-25</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-3 rounded {% if result.maturity_level.value == 'Experimenting' %}bg-warning bg-opacity-25 border border-warning{% else %}bg-light{% endif %}">
+                        <i class="fas fa-flask fa-2x mb-2 {% if result.maturity_level.value == 'Experimenting' %}text-warning{% else %}text-muted{% endif %}"></i>
+                        <h6 class="mb-1">Experimenting</h6>
+                        <small class="text-muted">26-50</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-3 rounded {% if result.maturity_level.value == 'Scaling' %}bg-success bg-opacity-25 border border-success{% else %}bg-light{% endif %}">
+                        <i class="fas fa-chart-line fa-2x mb-2 {% if result.maturity_level.value == 'Scaling' %}text-success{% else %}text-muted{% endif %}"></i>
+                        <h6 class="mb-1">Scaling</h6>
+                        <small class="text-muted">51-75</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="p-3 rounded {% if result.maturity_level.value == 'Optimizing' %}bg-info bg-opacity-25 border border-info{% else %}bg-light{% endif %}">
+                        <i class="fas fa-rocket fa-2x mb-2 {% if result.maturity_level.value == 'Optimizing' %}text-info{% else %}text-muted{% endif %}"></i>
+                        <h6 class="mb-1">Optimizing</h6>
+                        <small class="text-muted">76-100</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <h4 class="mb-3">Ready to Accelerate Your AI Journey?</h4>
+        <p class="text-muted mb-4">
+            Our team of AI specialists can help you implement the recommendations
+            and build production-grade AI solutions tailored to your organization.
+        </p>
+        <a href="mailto:info@patriottechsystems.com?subject=AI%20Readiness%20Assessment%20Follow-up" class="btn btn-patriot btn-lg">
+            <i class="fas fa-calendar-alt me-2"></i>Schedule a Consultation
+        </a>
+        <p class="small text-muted mt-3 mb-0">
+            <i class="fas fa-phone me-1"></i> Or call us at +1 (352) 555-0100
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Radar Chart
+    const ctx = document.getElementById('radarChart').getContext('2d');
+
+    const dimensionLabels = [
+        {% for dim_id, dim_score in result.dimension_scores.items() %}
+        '{{ dim_score.dimension_name }}'{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const scores = [
+        {% for dim_id, dim_score in result.dimension_scores.items() %}
+        {{ dim_score.score }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const benchmarks = [
+        {% for dim_id in result.dimension_scores.keys() %}
+        {{ benchmark.dimensions[dim_id].average }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: dimensionLabels,
+            datasets: [
+                {
+                    label: 'Your Score',
+                    data: scores,
+                    backgroundColor: 'rgba(30, 58, 95, 0.2)',
+                    borderColor: '#1e3a5f',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#1e3a5f',
+                    pointRadius: 5
+                },
+                {
+                    label: 'Industry Average',
+                    data: benchmarks,
+                    backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                    borderColor: '#6c757d',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointBackgroundColor: '#6c757d',
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
