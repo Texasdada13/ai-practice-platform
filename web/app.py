@@ -22,8 +22,9 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Add src to path
+# Add src and web to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import exceptions and validators
 from exceptions import (
@@ -61,9 +62,13 @@ from utils.document_export import get_document_exporter
 
 # Import database modules
 from database import db, init_db, Lead, Assessment, ChatSession, Document
+from database.models import User, Organization, Role, AuditLog, create_audit_log, Permissions
 from database.repository import (
     LeadRepository, AssessmentRepository, ChatSessionRepository, DocumentRepository
 )
+
+# Import authentication modules
+from web.auth import auth_bp, init_login_manager
 
 # Configure logging
 logging.basicConfig(
@@ -71,6 +76,27 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def log_action(action: str, resource_type: str = None, resource_id: str = None, details: dict = None):
+    """Helper function to log user actions for audit trail."""
+    from flask_login import current_user
+    try:
+        user_id = current_user.id if current_user and current_user.is_authenticated else None
+        org_id = current_user.organization_id if current_user and current_user.is_authenticated else None
+        create_audit_log(
+            action=action,
+            user_id=user_id,
+            organization_id=org_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            details=details,
+            ip_address=request.remote_addr if request else None,
+            user_agent=request.user_agent.string[:500] if request and request.user_agent else None
+        )
+        db.session.commit()
+    except Exception as e:
+        logger.warning(f"Failed to create audit log: {e}")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -93,6 +119,12 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # Initialize database
 init_db(app)
+
+# Initialize Flask-Login
+init_login_manager(app)
+
+# Register authentication blueprint
+app.register_blueprint(auth_bp)
 
 # Security: CSRF Protection
 csrf = CSRFProtect(app)
@@ -364,6 +396,10 @@ def start_assessment():
         session['organization'] = validated_data['organization']
         session['responses'] = {}
         session['current_dimension'] = 0
+
+        # Audit log for assessment creation
+        log_action('assessment.create', 'assessment', assessment.id,
+                   {'sector': validated_data['sector'], 'organization': validated_data['organization']})
 
         logger.info(f"Assessment started: {assessment.id} for {validated_data['organization']}")
         return redirect(url_for('assessment'))
@@ -688,6 +724,7 @@ def generate_strategy():
         sector=sector
     )
 
+    log_action('framework.create', 'framework', None, {'type': 'strategy', 'sector': sector})
     return jsonify(strategy.to_dict())
 
 
@@ -709,6 +746,7 @@ def generate_governance():
         sector=sector
     )
 
+    log_action('framework.create', 'framework', None, {'type': 'governance', 'sector': sector})
     return jsonify(framework.to_dict())
 
 
@@ -730,6 +768,7 @@ def generate_ethics():
         sector=sector
     )
 
+    log_action('framework.create', 'framework', None, {'type': 'ethics', 'sector': sector})
     return jsonify(framework.to_dict())
 
 
@@ -757,6 +796,7 @@ def generate_mlops():
         team_size='medium'
     )
 
+    log_action('framework.create', 'framework', None, {'type': 'mlops', 'infrastructure': infrastructure, 'cloud': cloud})
     return jsonify(framework.to_dict())
 
 
@@ -782,6 +822,7 @@ def generate_data_strategy():
         primary_cloud=cloud
     )
 
+    log_action('framework.create', 'framework', None, {'type': 'data-strategy', 'sector': sector, 'cloud': cloud})
     return jsonify(framework.to_dict())
 
 
@@ -927,6 +968,10 @@ def generate_document():
     # Store document
     doc_id = str(uuid.uuid4())
     documents_db[doc_id] = document
+
+    # Audit log for document generation
+    log_action('document.create', 'document', doc_id,
+               {'doc_type': doc_type.value, 'word_count': document.word_count})
 
     return jsonify({
         'id': doc_id,
