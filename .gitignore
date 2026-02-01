@@ -79,3 +79,7 @@ secrets.json
 # Docker
 *.tar
 docker-compose.override.yml
+
+# Screenshots (keep directory, ignore images)
+screenshots/*
+!screenshots/.gitkeep
