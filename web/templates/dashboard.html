@@ -3,6 +3,16 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+{% if is_demo %}
+<div class="alert alert-info alert-dismissible fade show mb-0 rounded-0" role="alert">
+    <div class="container">
+        <i class="fas fa-flask me-2"></i>
+        <strong>Demo Mode</strong> - You're viewing sample data.
+        <a href="{{ url_for('index') }}" class="alert-link">Start your own assessment</a> for personalized results.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+{% endif %}
 <div class="hero-section" style="padding: 2rem 0;">
     <div class="container">
         <div class="row align-items-center">

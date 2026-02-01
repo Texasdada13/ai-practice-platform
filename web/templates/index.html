@@ -120,6 +120,7 @@
                     </h3>
 
                     <form action="/start" method="POST" id="leadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Full Name *</label>
@@ -164,6 +165,20 @@
                             </div>
                         </div>
                     </form>
+
+                    <div class="text-center mt-4 pt-4 border-top">
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-flask me-1"></i>
+                            Want to explore the platform first?
+                        </p>
+                        <a href="/demo" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-play-circle me-2"></i>
+                            Try Demo Mode
+                        </a>
+                        <p class="small text-muted mt-2 mb-0">
+                            Explore all features with sample data - no signup required
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

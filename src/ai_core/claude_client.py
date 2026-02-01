@@ -230,12 +230,12 @@ Focus on:
 
         conversation.add_message("assistant", full_response)
 
-    def _fallback_response(self, user_message: str, conversation: Conversation) -> str:
+    def _fallback_response(self, user_message: str, conversation: Optional[Conversation]) -> str:
         """Generate fallback response when API is unavailable"""
-        context = conversation.context
+        context = conversation.context if conversation else {}
 
         # Check for assessment context
-        if 'assessment_result' in context:
+        if context and 'assessment_result' in context:
             result = context['assessment_result']
             score = result.get('overall_score', 0)
             maturity = result.get('maturity_level', 'Unknown')

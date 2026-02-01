@@ -8,7 +8,7 @@ Manages conversation state, context injection, and response enhancement.
 import uuid
 import json
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Generator
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -239,6 +239,102 @@ Consider feasibility, impact, and data requirements."""
             "suggested_prompts": self.get_suggested_prompts(session_id),
             "timestamp": datetime.now().isoformat()
         }
+
+    def stream_chat(
+        self,
+        session_id: str,
+        user_message: str
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Stream a chat response token by token.
+
+        Args:
+            session_id: Session ID
+            user_message: User's message
+
+        Yields:
+            Dict with type ('token', 'done', 'error') and content
+        """
+        if session_id not in self.sessions:
+            yield {
+                "type": "error",
+                "content": "Session not found. Please start a new conversation."
+            }
+            return
+
+        session = self.sessions[session_id]
+        session.last_activity = datetime.now()
+
+        # Add user message to history
+        session.conversation_history.append({
+            "role": "user",
+            "content": user_message,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # Check if Claude is available
+        if not self.claude.is_available():
+            fallback = self.claude._fallback_response(
+                user_message,
+                self.claude.conversations.get(session_id)
+            )
+            # Simulate streaming for fallback
+            words = fallback.split(' ')
+            for i, word in enumerate(words):
+                yield {"type": "token", "content": word + (' ' if i < len(words) - 1 else '')}
+
+            session.conversation_history.append({
+                "role": "assistant",
+                "content": fallback,
+                "timestamp": datetime.now().isoformat()
+            })
+
+            yield {
+                "type": "done",
+                "suggested_prompts": self.get_suggested_prompts(session_id)
+            }
+            return
+
+        # Stream from Claude
+        try:
+            full_response = ""
+            conversation = self.claude.conversations.get(session_id)
+
+            if not conversation:
+                context = self._build_context(session)
+                conversation = self.claude.create_conversation(session_id, "consultant", context)
+
+            conversation.add_message("user", user_message)
+
+            with self.claude.client.messages.stream(
+                model=self.claude.model,
+                max_tokens=self.claude.MAX_TOKENS,
+                system=conversation.system_prompt,
+                messages=conversation.get_messages_for_api()
+            ) as stream:
+                for text in stream.text_stream:
+                    full_response += text
+                    yield {"type": "token", "content": text}
+
+            # Save to conversation history
+            conversation.add_message("assistant", full_response)
+            session.conversation_history.append({
+                "role": "assistant",
+                "content": full_response,
+                "timestamp": datetime.now().isoformat()
+            })
+
+            yield {
+                "type": "done",
+                "suggested_prompts": self.get_suggested_prompts(session_id)
+            }
+
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield {
+                "type": "error",
+                "content": f"An error occurred: {str(e)}"
+            }
 
     def change_mode(self, session_id: str, new_mode: ConversationMode) -> bool:
         """Change conversation mode for a session"""

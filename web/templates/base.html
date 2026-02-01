@@ -519,6 +519,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if session.get('assessment_id') %}
+                    {% if session.get('is_demo') %}
+                    <li class="nav-item">
+                        <span class="nav-link" style="background: rgba(255,255,255,0.2); cursor: default;">
+                            <i class="fas fa-flask"></i>Demo Mode
+                        </span>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-tachometer-alt"></i>Dashboard
@@ -599,7 +606,8 @@
         async function apiCall(url, method = 'GET', data = null) {
             const options = {
                 method,
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'  // Include session cookies
             };
             if (data) options.body = JSON.stringify(data);
             const response = await fetch(url, options);
