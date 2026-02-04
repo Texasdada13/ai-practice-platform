@@ -18,7 +18,7 @@ from exceptions import (
 
 # Valid sectors (should match assessment.questions.SECTORS)
 VALID_SECTORS = [
-    'general', 'healthcare', 'financial', 'retail', 'manufacturing',
+    'general', 'healthcare', 'financial_services', 'retail', 'manufacturing',
     'technology', 'government', 'education', 'energy', 'transportation'
 ]
 
