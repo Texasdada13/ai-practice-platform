@@ -560,6 +560,11 @@
                             <i class="fas fa-file-alt"></i>Documents
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'assessment_history' %}active{% endif %}" href="{{ url_for('assessment_history') }}">
+                            <i class="fas fa-chart-line"></i>History
+                        </a>
+                    </li>
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="/">

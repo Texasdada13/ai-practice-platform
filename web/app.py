@@ -408,6 +408,118 @@ def dashboard():
 
 
 # =============================================================================
+# ROUTES - Assessment History
+# =============================================================================
+
+@app.route('/history')
+def assessment_history():
+    """View assessment history and trends."""
+    from flask_login import current_user
+
+    # Get assessments for the current user/organization
+    assessments = []
+    chart_labels = []
+    chart_scores = []
+
+    if current_user and current_user.is_authenticated:
+        # Get assessments from database for logged-in users
+        org_assessments = Assessment.query.filter_by(
+            organization_id=current_user.organization_id
+        ).order_by(Assessment.created_at.desc()).all()
+
+        prev_score = None
+        for a in reversed(org_assessments):  # Oldest first for chart
+            if a.result and 'overall_score' in a.result:
+                score = a.result.get('overall_score', 0)
+                maturity = a.result.get('maturity_level', 'Exploring')
+                score_change = score - prev_score if prev_score is not None else None
+
+                assessments.insert(0, {
+                    'id': a.id,
+                    'overall_score': score,
+                    'maturity_level': maturity,
+                    'score_change': score_change,
+                    'created_at': a.created_at,
+                    'result': a.result
+                })
+                chart_labels.append(a.created_at.strftime('%b %d') if a.created_at else '')
+                chart_scores.append(score)
+                prev_score = score
+
+    # Get latest and previous for comparison
+    latest_assessment = assessments[0] if assessments else None
+    previous_assessment = assessments[1] if len(assessments) > 1 else None
+    score_change = None
+
+    if latest_assessment and previous_assessment:
+        score_change = latest_assessment['overall_score'] - previous_assessment['overall_score']
+
+    # Dimension comparison data
+    dimension_comparison = False
+    dimension_labels = []
+    current_dimensions = []
+    previous_dimensions = []
+
+    if latest_assessment and previous_assessment:
+        latest_dims = latest_assessment.get('result', {}).get('dimension_scores', {})
+        prev_dims = previous_assessment.get('result', {}).get('dimension_scores', {})
+
+        if latest_dims and prev_dims:
+            dimension_comparison = True
+            for dim_id, dim_data in latest_dims.items():
+                dim_name = dim_data.get('name', dim_id.replace('_', ' ').title())
+                dimension_labels.append(dim_name)
+                current_dimensions.append(dim_data.get('score', 0))
+                prev_dim = prev_dims.get(dim_id, {})
+                previous_dimensions.append(prev_dim.get('score', 0))
+
+    return render_template(
+        'history.html',
+        assessments=assessments,
+        latest_assessment=latest_assessment,
+        previous_assessment=previous_assessment,
+        score_change=score_change,
+        chart_labels=json.dumps(chart_labels),
+        chart_scores=json.dumps(chart_scores),
+        dimension_comparison=dimension_comparison,
+        dimension_labels=json.dumps(dimension_labels),
+        current_dimensions=json.dumps(current_dimensions),
+        previous_dimensions=json.dumps(previous_dimensions)
+    )
+
+
+@app.route('/assessment/<assessment_id>/view')
+def view_assessment(assessment_id):
+    """View a specific assessment."""
+    from flask_login import current_user
+
+    # Try database first
+    assessment = AssessmentRepository.get_by_id(assessment_id)
+
+    if not assessment:
+        # Try in-memory
+        assessment_data = assessments_db.get(assessment_id)
+        if not assessment_data:
+            return render_template('error.html', error='Assessment not found'), 404
+    else:
+        assessment_data = assessment.to_dict()
+
+    # Security check - only allow viewing own org's assessments
+    if current_user and current_user.is_authenticated:
+        if assessment and assessment.organization_id != current_user.organization_id:
+            return render_template('error.html', error='Access denied'), 403
+
+    return render_template(
+        'results.html',
+        result=assessment_data.get('result', {}),
+        benchmark={},
+        comparison={},
+        sector=assessment_data.get('sector', 'general'),
+        viewing_history=True
+    )
+
+
+# =============================================================================
 # ROUTES - Assessment
 # =============================================================================
 
