@@ -194,6 +194,23 @@
                         <i class="fas fa-sign-in-alt me-2"></i>Sign In
                     </button>
                 </form>
+
+                {% if sso and sso.enabled %}
+                <div class="text-center my-3">
+                    <span class="text-muted">or</span>
+                </div>
+                <a href="{{ url_for('sso.sso_login', org_slug=org.slug) }}" class="btn btn-outline-secondary btn-lg w-100">
+                    {% if sso.provider == 'azure_ad' or sso.provider == 'azure' %}
+                    <i class="fab fa-microsoft me-2"></i>Sign in with Microsoft
+                    {% elif sso.provider == 'okta' %}
+                    <i class="fas fa-key me-2"></i>Sign in with Okta
+                    {% elif sso.provider == 'google' %}
+                    <i class="fab fa-google me-2"></i>Sign in with Google
+                    {% else %}
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign in with {{ sso.provider_name }}
+                    {% endif %}
+                </a>
+                {% endif %}
             </div>
         </div>
     </main>

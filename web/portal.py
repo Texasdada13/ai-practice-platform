@@ -46,6 +46,30 @@ def portal_login_required(f):
 # Portal Authentication Routes
 # =============================================================================
 
+def get_sso_info(org):
+    """Get SSO info for display in login page."""
+    if not org or not org.settings:
+        return None
+
+    sso_settings = org.settings.get('sso', {})
+    if not sso_settings.get('enabled'):
+        return None
+
+    provider = sso_settings.get('provider', '').lower()
+    provider_names = {
+        'azure_ad': 'Microsoft',
+        'azure': 'Microsoft',
+        'okta': 'Okta',
+        'google': 'Google'
+    }
+
+    return {
+        'enabled': True,
+        'provider': provider,
+        'provider_name': provider_names.get(provider, provider.title())
+    }
+
+
 @portal_bp.route('/<org_slug>')
 @portal_bp.route('/<org_slug>/login', methods=['GET', 'POST'])
 def portal_login(org_slug):
@@ -54,6 +78,9 @@ def portal_login(org_slug):
     if not org:
         flash('Organization not found.', 'danger')
         return redirect(url_for('index'))
+
+    # Get SSO info
+    sso_info = get_sso_info(org)
 
     # If already logged in and belongs to this org, redirect to dashboard
     if current_user.is_authenticated:
@@ -73,11 +100,11 @@ def portal_login(org_slug):
             # Verify user belongs to this organization
             if user.organization_id != org.id:
                 flash('You do not have access to this portal.', 'danger')
-                return render_template('portal/login.html', org=org)
+                return render_template('portal/login.html', org=org, sso=sso_info)
 
             if not user.is_active:
                 flash('Your account has been deactivated.', 'danger')
-                return render_template('portal/login.html', org=org)
+                return render_template('portal/login.html', org=org, sso=sso_info)
 
             login_user(user, remember=remember)
 
@@ -91,7 +118,7 @@ def portal_login(org_slug):
         else:
             flash('Invalid email or password.', 'danger')
 
-    return render_template('portal/login.html', org=org)
+    return render_template('portal/login.html', org=org, sso=sso_info)
 
 
 @portal_bp.route('/<org_slug>/logout')

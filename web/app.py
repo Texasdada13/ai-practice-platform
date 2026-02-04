@@ -74,6 +74,9 @@ from web.auth import auth_bp, init_login_manager
 # Import portal modules
 from web.portal import portal_bp
 
+# Import SSO modules
+from web.sso import sso_bp, init_sso
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -132,6 +135,10 @@ app.register_blueprint(auth_bp)
 
 # Register client portal blueprint
 app.register_blueprint(portal_bp)
+
+# Register SSO blueprint and initialize OAuth
+app.register_blueprint(sso_bp)
+init_sso(app)
 
 # Security: CSRF Protection
 csrf = CSRFProtect(app)

@@ -133,6 +133,9 @@ class User(db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     is_owner = db.Column(db.Boolean, default=False)  # Organization owner
 
+    # SSO
+    sso_provider = db.Column(db.String(50), nullable=True)  # azure_ad, okta, google, etc.
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

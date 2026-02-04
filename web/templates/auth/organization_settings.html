@@ -143,6 +143,108 @@
                 </div>
             </div>
 
+            <!-- SSO Settings (Enterprise only) -->
+            {% if organization.plan == 'enterprise' %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>Single Sign-On (SSO)</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.sso_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3 form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="sso_enabled" name="sso_enabled" value="1"
+                                   {% if organization.settings and organization.settings.get('sso', {}).get('enabled') %}checked{% endif %}>
+                            <label class="form-check-label" for="sso_enabled">Enable SSO</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sso_provider" class="form-label">Identity Provider</label>
+                            <select class="form-select" id="sso_provider" name="sso_provider">
+                                <option value="">Select provider...</option>
+                                <option value="azure_ad" {% if organization.settings and organization.settings.get('sso', {}).get('provider') == 'azure_ad' %}selected{% endif %}>
+                                    Microsoft Azure AD
+                                </option>
+                                <option value="okta" {% if organization.settings and organization.settings.get('sso', {}).get('provider') == 'okta' %}selected{% endif %}>
+                                    Okta
+                                </option>
+                                <option value="google" {% if organization.settings and organization.settings.get('sso', {}).get('provider') == 'google' %}selected{% endif %}>
+                                    Google Workspace
+                                </option>
+                            </select>
+                        </div>
+
+                        <div id="azure-fields" class="sso-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="tenant_id" class="form-label">Azure Tenant ID</label>
+                                <input type="text" class="form-control" id="tenant_id" name="tenant_id"
+                                       value="{{ organization.settings.get('sso', {}).get('tenant_id', '') if organization.settings else '' }}"
+                                       placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                            </div>
+                        </div>
+
+                        <div id="okta-fields" class="sso-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="okta_domain" class="form-label">Okta Domain</label>
+                                <input type="text" class="form-control" id="okta_domain" name="okta_domain"
+                                       value="{{ organization.settings.get('sso', {}).get('okta_domain', '') if organization.settings else '' }}"
+                                       placeholder="dev-123456.okta.com">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="client_id" class="form-label">Client ID</label>
+                                <input type="text" class="form-control" id="client_id" name="client_id"
+                                       value="{{ organization.settings.get('sso', {}).get('client_id', '') if organization.settings else '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="client_secret" class="form-label">Client Secret</label>
+                                <input type="password" class="form-control" id="client_secret" name="client_secret"
+                                       placeholder="{% if organization.settings and organization.settings.get('sso', {}).get('client_secret') %}••••••••{% endif %}">
+                                <small class="text-muted">Leave blank to keep existing secret</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="auto_provision" name="auto_provision" value="1"
+                                   {% if organization.settings and organization.settings.get('sso', {}).get('auto_provision') %}checked{% endif %}>
+                            <label class="form-check-label" for="auto_provision">
+                                Auto-provision users (create accounts automatically on first SSO login)
+                            </label>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Portal SSO URL:</strong>
+                            <code>{{ request.host_url }}portal/{{ organization.slug }}</code>
+                            <br>
+                            <strong>Callback URL:</strong>
+                            <code>{{ request.host_url }}sso/callback/{{ organization.slug }}</code>
+                        </div>
+
+                        <button type="submit" class="btn btn-patriot">
+                            <i class="fas fa-save me-2"></i>Save SSO Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                // Show/hide provider-specific fields
+                document.getElementById('sso_provider').addEventListener('change', function() {
+                    document.querySelectorAll('.sso-fields').forEach(el => el.style.display = 'none');
+                    if (this.value === 'azure_ad') {
+                        document.getElementById('azure-fields').style.display = 'block';
+                    } else if (this.value === 'okta') {
+                        document.getElementById('okta-fields').style.display = 'block';
+                    }
+                });
+                // Trigger on page load
+                document.getElementById('sso_provider').dispatchEvent(new Event('change'));
+            </script>
+            {% endif %}
+
             <!-- Plan Information -->
             <div class="card mt-4">
                 <div class="card-header">

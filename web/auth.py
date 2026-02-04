@@ -363,6 +363,88 @@ def organization_settings():
     return render_template('auth/organization_settings.html', organization=org)
 
 
+@auth_bp.route('/organization/sso', methods=['POST'])
+@login_required
+@permission_required(Permissions.ORG_SETTINGS)
+def sso_settings():
+    """Update SSO settings for the organization."""
+    org = current_user.organization
+
+    # Only enterprise plans can use SSO
+    if org.plan != 'enterprise':
+        flash('SSO is only available on the Enterprise plan.', 'warning')
+        return redirect(url_for('auth.organization_settings'))
+
+    # Get current settings or create new dict
+    settings = org.settings or {}
+    sso_config = settings.get('sso', {})
+
+    # Update SSO settings
+    sso_enabled = request.form.get('sso_enabled') == '1'
+    sso_provider = request.form.get('sso_provider', '').strip()
+    client_id = request.form.get('client_id', '').strip()
+    client_secret = request.form.get('client_secret', '').strip()
+    auto_provision = request.form.get('auto_provision') == '1'
+
+    # Provider-specific settings
+    tenant_id = request.form.get('tenant_id', '').strip()
+    okta_domain = request.form.get('okta_domain', '').strip()
+
+    # Validate required fields if SSO is enabled
+    if sso_enabled:
+        if not sso_provider:
+            flash('Please select an identity provider.', 'danger')
+            return redirect(url_for('auth.organization_settings'))
+        if not client_id:
+            flash('Client ID is required.', 'danger')
+            return redirect(url_for('auth.organization_settings'))
+        # Only require secret if not already set
+        if not client_secret and not sso_config.get('client_secret'):
+            flash('Client Secret is required.', 'danger')
+            return redirect(url_for('auth.organization_settings'))
+
+        # Provider-specific validation
+        if sso_provider == 'azure_ad' and not tenant_id:
+            flash('Azure Tenant ID is required.', 'danger')
+            return redirect(url_for('auth.organization_settings'))
+        if sso_provider == 'okta' and not okta_domain:
+            flash('Okta Domain is required.', 'danger')
+            return redirect(url_for('auth.organization_settings'))
+
+    # Update SSO config
+    sso_config['enabled'] = sso_enabled
+    sso_config['provider'] = sso_provider
+    sso_config['client_id'] = client_id
+    sso_config['auto_provision'] = auto_provision
+
+    # Only update secret if provided (keep existing if blank)
+    if client_secret:
+        sso_config['client_secret'] = client_secret
+
+    # Provider-specific settings
+    if sso_provider == 'azure_ad':
+        sso_config['tenant_id'] = tenant_id
+    elif sso_provider == 'okta':
+        sso_config['okta_domain'] = okta_domain
+
+    # Save settings
+    settings['sso'] = sso_config
+    org.settings = settings
+
+    create_audit_log(
+        action='organization.sso_settings_update',
+        user_id=current_user.id,
+        organization_id=org.id,
+        details={'sso_enabled': sso_enabled, 'provider': sso_provider},
+        ip_address=request.remote_addr
+    )
+
+    db.session.commit()
+    flash('SSO settings updated successfully.', 'success')
+
+    return redirect(url_for('auth.organization_settings'))
+
+
 @auth_bp.route('/team', methods=['GET'])
 @login_required
 @permission_required(Permissions.USER_MANAGE)
