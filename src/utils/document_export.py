@@ -410,8 +410,260 @@ class DocumentExporter:
         return extensions.get(format, '.txt')
 
 
-# Singleton instance
+class AssessmentPDFExporter:
+    """Export assessment reports to branded PDF format."""
+
+    def __init__(self):
+        self.styles = getSampleStyleSheet()
+
+    def _hex_to_color(self, hex_color: str):
+        """Convert hex color string to reportlab color."""
+        hex_color = hex_color.lstrip('#')
+        return colors.HexColor(f'#{hex_color}')
+
+    def _setup_branded_styles(self, primary_color: str, secondary_color: str):
+        """Set up custom PDF styles with branding colors."""
+        primary = self._hex_to_color(primary_color)
+        secondary = self._hex_to_color(secondary_color)
+
+        # Create new styles each time to support different branding
+        custom_styles = {}
+
+        custom_styles['BrandedTitle'] = ParagraphStyle(
+            name='BrandedTitle',
+            parent=self.styles['Title'],
+            fontSize=28,
+            spaceAfter=20,
+            textColor=primary,
+            alignment=TA_CENTER
+        )
+
+        custom_styles['BrandedSubtitle'] = ParagraphStyle(
+            name='BrandedSubtitle',
+            parent=self.styles['Normal'],
+            fontSize=14,
+            spaceAfter=30,
+            textColor=colors.grey,
+            alignment=TA_CENTER
+        )
+
+        custom_styles['BrandedHeading1'] = ParagraphStyle(
+            name='BrandedHeading1',
+            parent=self.styles['Heading1'],
+            fontSize=18,
+            spaceBefore=24,
+            spaceAfter=12,
+            textColor=primary
+        )
+
+        custom_styles['BrandedHeading2'] = ParagraphStyle(
+            name='BrandedHeading2',
+            parent=self.styles['Heading2'],
+            fontSize=14,
+            spaceBefore=16,
+            spaceAfter=8,
+            textColor=secondary
+        )
+
+        custom_styles['BrandedBody'] = ParagraphStyle(
+            name='BrandedBody',
+            parent=self.styles['Normal'],
+            fontSize=11,
+            spaceAfter=8,
+            alignment=TA_JUSTIFY,
+            leading=14
+        )
+
+        custom_styles['BrandedScore'] = ParagraphStyle(
+            name='BrandedScore',
+            parent=self.styles['Normal'],
+            fontSize=48,
+            textColor=primary,
+            alignment=TA_CENTER
+        )
+
+        custom_styles['BrandedLabel'] = ParagraphStyle(
+            name='BrandedLabel',
+            parent=self.styles['Normal'],
+            fontSize=12,
+            textColor=colors.grey,
+            alignment=TA_CENTER
+        )
+
+        return custom_styles
+
+    def export(
+        self,
+        assessment_data: Dict[str, Any],
+        branding: Dict[str, Any],
+        organization_name: str = "Organization"
+    ) -> BytesIO:
+        """
+        Export assessment to branded PDF.
+
+        Args:
+            assessment_data: Assessment result data
+            branding: Organization branding settings (colors, logo, name)
+            organization_name: Organization name
+
+        Returns:
+            BytesIO buffer containing the PDF
+        """
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=60,
+            leftMargin=60,
+            topMargin=60,
+            bottomMargin=60
+        )
+
+        primary_color = branding.get('primary_color', '#0066FF')
+        secondary_color = branding.get('secondary_color', '#00D4AA')
+        brand_name = branding.get('name', 'AI Practice Platform')
+        powered_by = branding.get('powered_by', 'Patriot Tech Systems Consulting LLC')
+
+        styles = self._setup_branded_styles(primary_color, secondary_color)
+        story = []
+
+        # Header with branding
+        story.append(Paragraph(brand_name, styles['BrandedTitle']))
+        story.append(Paragraph("AI Readiness Assessment Report", styles['BrandedSubtitle']))
+        story.append(Spacer(1, 10))
+
+        # Organization and date
+        date_str = datetime.now().strftime("%B %d, %Y")
+        story.append(Paragraph(
+            f"<b>Prepared for:</b> {organization_name}",
+            styles['BrandedBody']
+        ))
+        story.append(Paragraph(f"<b>Date:</b> {date_str}", styles['BrandedBody']))
+        story.append(Spacer(1, 30))
+
+        # Extract result data
+        result = assessment_data.get('result', assessment_data)
+        overall_score = result.get('overall_score', 0)
+        maturity_level = result.get('maturity_level', 'Exploring')
+
+        # Overall Score Section
+        story.append(Paragraph("Executive Summary", styles['BrandedHeading1']))
+        story.append(Spacer(1, 10))
+
+        # Score display in a table for better formatting
+        score_data = [
+            [Paragraph(f"{int(overall_score)}", styles['BrandedScore'])],
+            [Paragraph("Overall AI Readiness Score", styles['BrandedLabel'])],
+            [Paragraph(f"Maturity Level: <b>{maturity_level}</b>", styles['BrandedBody'])]
+        ]
+        score_table = Table(score_data, colWidths=[300])
+        score_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        story.append(score_table)
+        story.append(Spacer(1, 20))
+
+        # Dimension Scores
+        dimension_scores = result.get('dimension_scores', {})
+        if dimension_scores:
+            story.append(Paragraph("Assessment Dimensions", styles['BrandedHeading1']))
+            story.append(Spacer(1, 10))
+
+            dim_data = [['Dimension', 'Score', 'Status']]
+            for dim_id, dim_info in dimension_scores.items():
+                dim_name = dim_info.get('name', dim_id.replace('_', ' ').title())
+                dim_score = dim_info.get('score', 0)
+                if dim_score >= 70:
+                    status = 'Strong'
+                elif dim_score >= 40:
+                    status = 'Developing'
+                else:
+                    status = 'Needs Attention'
+                dim_data.append([dim_name, f"{int(dim_score)}%", status])
+
+            dim_table = Table(dim_data, colWidths=[250, 80, 100])
+            dim_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), self._hex_to_color(primary_color)),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (1, 0), (2, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('TOPPADDING', (0, 0), (-1, 0), 12),
+                ('TOPPADDING', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+            ]))
+            story.append(dim_table)
+            story.append(Spacer(1, 20))
+
+        # Strengths
+        strengths = result.get('strengths', [])
+        if strengths:
+            story.append(Paragraph("Key Strengths", styles['BrandedHeading1']))
+            story.append(Spacer(1, 10))
+            for s in strengths[:5]:
+                area = s.get('area', '')
+                desc = s.get('description', '')
+                story.append(Paragraph(f"<b>✓ {area}</b>", styles['BrandedBody']))
+                story.append(Paragraph(f"   {desc}", styles['BrandedBody']))
+            story.append(Spacer(1, 15))
+
+        # Improvements
+        improvements = result.get('improvements', [])
+        if improvements:
+            story.append(Paragraph("Areas for Improvement", styles['BrandedHeading1']))
+            story.append(Spacer(1, 10))
+            for i in improvements[:5]:
+                area = i.get('area', '')
+                rec = i.get('recommendation', '')
+                story.append(Paragraph(f"<b>→ {area}</b>", styles['BrandedBody']))
+                story.append(Paragraph(f"   {rec}", styles['BrandedBody']))
+            story.append(Spacer(1, 15))
+
+        # Recommendations
+        recommendations = result.get('recommendations', [])
+        if recommendations:
+            story.append(PageBreak())
+            story.append(Paragraph("Strategic Recommendations", styles['BrandedHeading1']))
+            story.append(Spacer(1, 10))
+            for idx, rec in enumerate(recommendations[:8], 1):
+                if isinstance(rec, dict):
+                    rec_text = rec.get('text', rec.get('recommendation', str(rec)))
+                else:
+                    rec_text = str(rec)
+                story.append(Paragraph(f"{idx}. {rec_text}", styles['BrandedBody']))
+            story.append(Spacer(1, 20))
+
+        # Footer
+        story.append(Spacer(1, 30))
+        story.append(Paragraph(
+            f"<i>Report generated by {brand_name}</i>",
+            ParagraphStyle('Footer', parent=self.styles['Normal'],
+                          fontSize=9, textColor=colors.grey, alignment=TA_CENTER)
+        ))
+        story.append(Paragraph(
+            f"<i>Powered by {powered_by}</i>",
+            ParagraphStyle('Footer2', parent=self.styles['Normal'],
+                          fontSize=9, textColor=colors.grey, alignment=TA_CENTER)
+        ))
+
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer
+
+
+# Singleton instances
 _exporter = None
+_assessment_exporter = None
 
 
 def get_document_exporter() -> DocumentExporter:
@@ -420,3 +672,11 @@ def get_document_exporter() -> DocumentExporter:
     if _exporter is None:
         _exporter = DocumentExporter()
     return _exporter
+
+
+def get_assessment_exporter() -> AssessmentPDFExporter:
+    """Get singleton AssessmentPDFExporter instance."""
+    global _assessment_exporter
+    if _assessment_exporter is None:
+        _assessment_exporter = AssessmentPDFExporter()
+    return _assessment_exporter

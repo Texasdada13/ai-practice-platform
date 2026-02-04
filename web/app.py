@@ -11,12 +11,13 @@ Flask-based web dashboard for:
 
 import os
 import sys
+import re
 import json
 import uuid
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response, send_file
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
@@ -517,6 +518,80 @@ def view_assessment(assessment_id):
         sector=assessment_data.get('sector', 'general'),
         viewing_history=True
     )
+
+
+@app.route('/export/assessment')
+@app.route('/export/assessment/<assessment_id>')
+def export_assessment_pdf(assessment_id=None):
+    """Export assessment as branded PDF."""
+    from flask_login import current_user
+    from utils.document_export import get_assessment_exporter
+
+    # Get assessment data
+    if assessment_id:
+        # Export specific assessment
+        assessment = AssessmentRepository.get_by_id(assessment_id)
+        if not assessment:
+            return jsonify({'error': 'Assessment not found'}), 404
+        assessment_data = assessment.to_dict()
+
+        # Security check
+        if current_user and current_user.is_authenticated:
+            if assessment.organization_id != current_user.organization_id:
+                return jsonify({'error': 'Access denied'}), 403
+    else:
+        # Export current session assessment
+        assessment_id = session.get('assessment_id')
+        if not assessment_id:
+            return jsonify({'error': 'No assessment in session'}), 400
+
+        # Try database first
+        assessment = AssessmentRepository.get_by_id(assessment_id)
+        if assessment:
+            assessment_data = assessment.to_dict()
+        else:
+            # Try in-memory
+            assessment_data = assessments_db.get(assessment_id)
+            if not assessment_data:
+                return jsonify({'error': 'Assessment not found'}), 404
+
+    # Get branding (use organization's branding if logged in, else default)
+    branding = DEFAULT_BRANDING.copy()
+    organization_name = session.get('organization', 'Organization')
+
+    if current_user and current_user.is_authenticated and current_user.organization:
+        org = current_user.organization
+        organization_name = org.name
+        branding.update({
+            'name': org.name if org.name else branding['name'],
+            'primary_color': org.primary_color or branding['primary_color'],
+            'secondary_color': org.secondary_color or branding['secondary_color'],
+            'powered_by': DEFAULT_BRANDING['powered_by'],
+        })
+
+    # Generate PDF
+    try:
+        exporter = get_assessment_exporter()
+        pdf_buffer = exporter.export(
+            assessment_data=assessment_data,
+            branding=branding,
+            organization_name=organization_name
+        )
+
+        # Create filename
+        date_str = datetime.now().strftime('%Y%m%d')
+        safe_org = re.sub(r'[^\w\s-]', '', organization_name).strip().replace(' ', '_')
+        filename = f"AI_Assessment_{safe_org}_{date_str}.pdf"
+
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        logger.error(f"Error exporting assessment PDF: {e}")
+        return jsonify({'error': 'Failed to export PDF'}), 500
 
 
 # =============================================================================
