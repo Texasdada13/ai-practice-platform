@@ -23,5 +23,5 @@ services:
 
 databases:
   - name: ai-practice-db
-    plan: free  # Change to 'starter' or higher for production
+    plan: starter  # $7/month - required if you already have a free tier database
     databaseName: ai_practice_platform
