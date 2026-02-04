@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | {{ org.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --portal-primary: {{ org.primary_color or '#0066FF' }};
+            --portal-secondary: {{ org.secondary_color or '#00D4AA' }};
+            --portal-gradient: linear-gradient(135deg, {{ org.primary_color or '#0066FF' }} 0%, {{ org.secondary_color or '#00D4AA' }} 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1a202c;
+        }
+
+        .navbar {
+            background: var(--portal-gradient);
+            padding: 0.75rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            height: 36px;
+            margin-right: 10px;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px;
+            margin: 0 0.15rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .hero-section {
+            background: var(--portal-gradient);
+            color: white;
+            padding: 2.5rem 0;
+        }
+
+        .hero-section h1 {
+            font-weight: 700;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+
+        .btn-portal {
+            background: var(--portal-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-portal:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .btn-portal-outline {
+            border: 2px solid var(--portal-primary);
+            color: var(--portal-primary);
+            background: transparent;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-portal-outline:hover {
+            background: var(--portal-primary);
+            color: white;
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            background: white;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 6px;
+            background: var(--portal-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--portal-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .maturity-badge {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .maturity-exploring { background: #fed7d7; color: #c53030; }
+        .maturity-developing { background: #feebc8; color: #c05621; }
+        .maturity-established { background: #c6f6d5; color: #276749; }
+        .maturity-advanced { background: #bee3f8; color: #2b6cb0; }
+        .maturity-leading { background: #e9d8fd; color: #6b46c1; }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem;
+            background: white;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--portal-primary);
+            color: inherit;
+        }
+
+        .quick-action i {
+            font-size: 1.75rem;
+            margin-right: 1rem;
+            color: var(--portal-primary);
+        }
+
+        .portal-footer {
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+        }
+
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('portal.portal_dashboard', org_slug=org.slug) }}">
+                {% if org.logo_url %}
+                <img src="{{ org.logo_url }}" alt="{{ org.name }}">
+                {% else %}
+                <i class="fas fa-building me-2"></i>
+                {% endif %}
+                {{ org.name }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('portal.portal_dashboard', org_slug=org.slug) }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('portal.portal_assessments', org_slug=org.slug) }}">
+                            <i class="fas fa-chart-line me-1"></i>Assessments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('portal.portal_chat', org_slug=org.slug) }}">
+                            <i class="fas fa-comments me-1"></i>AI Chat
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('portal.portal_documents', org_slug=org.slug) }}">
+                            <i class="fas fa-file-alt me-1"></i>Documents
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown ms-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>{{ current_user.first_name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><span class="dropdown-item-text text-muted small">{{ current_user.email }}</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('portal.portal_profile', org_slug=org.slug) }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('portal.portal_logout', org_slug=org.slug) }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="mb-2">Welcome, {{ current_user.first_name }}!</h1>
+                    <p class="lead mb-0 opacity-90">Your AI Readiness Assessment Portal</p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a href="{{ url_for('portal.portal_new_assessment', org_slug=org.slug) }}" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i>New Assessment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        {% if latest_assessment %}
+        <!-- Score Overview -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="score-circle mb-3">
+                            <span class="score-value">{{ latest_assessment.overall_score|int }}</span>
+                            <span class="score-label">AI Readiness</span>
+                        </div>
+                        <span class="maturity-badge maturity-{{ latest_assessment.maturity_level|lower }}">
+                            {{ latest_assessment.maturity_level }}
+                        </span>
+                        <p class="text-muted small mt-3 mb-0">Latest Assessment: {{ latest_assessment.created_at.strftime('%b %d, %Y') if latest_assessment.created_at else 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-2"></i>Dimension Scores
+                    </div>
+                    <div class="card-body">
+                        <canvas id="dimensionChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- No Assessments Yet -->
+        <div class="card mb-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-chart-pie fa-4x mb-4" style="color: var(--portal-primary); opacity: 0.5;"></i>
+                <h3>No Assessments Yet</h3>
+                <p class="text-muted mb-4">Start your first AI readiness assessment to see your scores and recommendations.</p>
+                <a href="{{ url_for('portal.portal_new_assessment', org_slug=org.slug) }}" class="btn btn-portal btn-lg">
+                    <i class="fas fa-play me-2"></i>Start Assessment
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <h4 class="mb-3"><i class="fas fa-bolt me-2" style="color: var(--portal-secondary);"></i>Quick Actions</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ url_for('portal.portal_chat', org_slug=org.slug) }}" class="quick-action">
+                    <i class="fas fa-comments"></i>
+                    <div>
+                        <h6 class="mb-1">AI Consultant</h6>
+                        <small class="text-muted">Chat with Claude about your AI strategy</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ url_for('portal.portal_documents', org_slug=org.slug) }}" class="quick-action">
+                    <i class="fas fa-file-alt"></i>
+                    <div>
+                        <h6 class="mb-1">Documents</h6>
+                        <small class="text-muted">View and generate strategy documents</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ url_for('portal.portal_assessments', org_slug=org.slug) }}" class="quick-action">
+                    <i class="fas fa-history"></i>
+                    <div>
+                        <h6 class="mb-1">Assessment History</h6>
+                        <small class="text-muted">Track your progress over time</small>
+                    </div>
+                </a>
+            </div>
+            {% if latest_assessment %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ url_for('portal.portal_export_pdf', org_slug=org.slug) }}" class="quick-action">
+                    <i class="fas fa-file-pdf"></i>
+                    <div>
+                        <h6 class="mb-1">Export Report</h6>
+                        <small class="text-muted">Download your assessment as PDF</small>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if latest_assessment %}
+        <!-- Key Insights -->
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-trophy me-2 text-success"></i>Key Strengths
+                    </div>
+                    <div class="card-body">
+                        {% if strengths %}
+                            {% for strength in strengths[:3] %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="rounded p-2 me-3" style="background: rgba(0, 200, 150, 0.1);">
+                                    <i class="fas fa-check" style="color: var(--portal-secondary);"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ strength.area }}</h6>
+                                    <small class="text-muted">{{ strength.description }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">Complete an assessment to see your strengths.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Recommendations
+                    </div>
+                    <div class="card-body">
+                        {% if recommendations %}
+                            {% for rec in recommendations[:3] %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="rounded p-2 me-3" style="background: rgba(255, 200, 0, 0.1);">
+                                    <i class="fas fa-arrow-right" style="color: var(--portal-primary);"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0">{{ rec }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted mb-0">Complete an assessment to see recommendations.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="portal-footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">Powered by <a href="https://www.patriottechsystems.com" target="_blank" style="color: var(--portal-primary);">Patriot Tech Systems Consulting LLC</a></p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">&copy; {{ org.name }} {{ now.year }}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% if latest_assessment and dimension_scores %}
+    <script>
+        const dimensionData = {
+            labels: {{ dimension_labels|safe }},
+            datasets: [{
+                label: 'Score',
+                data: {{ dimension_values|safe }},
+                backgroundColor: '{{ org.primary_color or "#0066FF" }}',
+                borderRadius: 6
+            }]
+        };
+
+        const dimensionConfig = {
+            type: 'bar',
+            data: dimensionData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        new Chart(document.getElementById('dimensionChart'), dimensionConfig);
+    </script>
+    {% endif %}
+</body>
+</html>

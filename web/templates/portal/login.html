@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | {{ org.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --portal-primary: {{ org.primary_color or '#0066FF' }};
+            --portal-secondary: {{ org.secondary_color or '#00D4AA' }};
+            --portal-gradient: linear-gradient(135deg, {{ org.primary_color or '#0066FF' }} 0%, {{ org.secondary_color or '#00D4AA' }} 100%);
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .portal-header {
+            background: var(--portal-gradient);
+            padding: 1rem 0;
+        }
+
+        .portal-brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .portal-brand img {
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        .portal-brand span {
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .login-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .login-card-header {
+            background: var(--portal-gradient);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .login-card-header h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .login-card-header p {
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+
+        .login-card-body {
+            padding: 2rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-control:focus {
+            border-color: var(--portal-primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .btn-portal {
+            background: var(--portal-gradient);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-portal:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .portal-footer {
+            text-align: center;
+            padding: 1rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .portal-footer a {
+            color: var(--portal-primary);
+            text-decoration: none;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="portal-header">
+        <div class="container">
+            <a href="{{ url_for('portal.portal_login', org_slug=org.slug) }}" class="portal-brand">
+                {% if org.logo_url %}
+                <img src="{{ org.logo_url }}" alt="{{ org.name }}">
+                {% else %}
+                <i class="fas fa-building fa-2x text-white me-2"></i>
+                {% endif %}
+                <span>{{ org.name }}</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="login-container">
+        <div class="login-card">
+            <div class="login-card-header">
+                <h2>Welcome Back</h2>
+                <p>Sign in to access your AI assessment portal</p>
+            </div>
+            <div class="login-card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('portal.portal_login', org_slug=org.slug) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   placeholder="you@company.com" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Enter your password" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember" value="1">
+                        <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-portal btn-lg w-100">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="portal-footer">
+        <p>Powered by <a href="https://www.patriottechsystems.com" target="_blank">Patriot Tech Systems Consulting LLC</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -71,6 +71,9 @@ from database.repository import (
 # Import authentication modules
 from web.auth import auth_bp, init_login_manager
 
+# Import portal modules
+from web.portal import portal_bp
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -126,6 +129,9 @@ init_login_manager(app)
 
 # Register authentication blueprint
 app.register_blueprint(auth_bp)
+
+# Register client portal blueprint
+app.register_blueprint(portal_bp)
 
 # Security: CSRF Protection
 csrf = CSRFProtect(app)
