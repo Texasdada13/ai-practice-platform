@@ -113,9 +113,14 @@ app.secret_key = os.environ.get('SECRET_KEY', 'ai-practice-platform-2024-secure'
 basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 db_path = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(basedir, "data", "platform.db")}')
 
-# Ensure data directory exists
-data_dir = os.path.join(basedir, 'data')
-os.makedirs(data_dir, exist_ok=True)
+# Fix for Render/Heroku PostgreSQL URLs (postgres:// -> postgresql://)
+if db_path.startswith('postgres://'):
+    db_path = db_path.replace('postgres://', 'postgresql://', 1)
+
+# Ensure data directory exists for SQLite
+if db_path.startswith('sqlite'):
+    data_dir = os.path.join(basedir, 'data')
+    os.makedirs(data_dir, exist_ok=True)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_path
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

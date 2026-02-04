@@ -1,0 +1,27 @@
+# Render Blueprint - AI Practice Platform
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: ai-practice-platform
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python -c "from web.app import app, db; app.app_context().push(); db.create_all()"
+    startCommand: gunicorn web.app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-practice-db
+          property: connectionString
+
+databases:
+  - name: ai-practice-db
+    plan: free  # Change to 'starter' or higher for production
+    databaseName: ai_practice_platform

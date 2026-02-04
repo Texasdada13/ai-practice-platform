@@ -9,8 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Index, event
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy import Index, event, JSON
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
