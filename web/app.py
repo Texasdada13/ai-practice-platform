@@ -391,6 +391,14 @@ def dashboard():
     else:
         assessment_data = assessments_db.get(assessment_id, {})
 
+    # If no assessment data found (e.g., server restarted and in-memory cleared),
+    # redirect to index for demo mode or show error
+    if not assessment_data or 'result' not in assessment_data:
+        if session.get('is_demo'):
+            # Re-trigger demo mode to regenerate data
+            return redirect(url_for('demo_mode'))
+        return redirect(url_for('index'))
+
     return render_template(
         'dashboard.html',
         assessment=assessment_data,
