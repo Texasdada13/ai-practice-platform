@@ -4,14 +4,25 @@ Authentication Blueprint for AI Practice Platform.
 Provides user registration, login, logout, and password management.
 """
 
+import os
 import re
+import uuid
 from datetime import datetime
 from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 
 from database import db, User, Organization, Role, AuditLog, create_audit_log, Permissions
+
+# Allowed file extensions for logo upload
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
+
+
+def allowed_file(filename):
+    """Check if file has allowed extension."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -311,20 +322,38 @@ def organization_settings():
         org.name = request.form.get('name', org.name).strip()
         org.sector = request.form.get('sector', org.sector)
 
-        # White-label settings
-        org.primary_color = request.form.get('primary_color', org.primary_color)
-        org.secondary_color = request.form.get('secondary_color', org.secondary_color)
+        # White-label settings - colors
+        primary_color = request.form.get('primary_color', '').strip()
+        secondary_color = request.form.get('secondary_color', '').strip()
 
-        # Logo URL (in production, handle file upload)
-        logo_url = request.form.get('logo_url', '').strip()
-        if logo_url:
-            org.logo_url = logo_url
+        if primary_color and primary_color.startswith('#'):
+            org.primary_color = primary_color
+        if secondary_color and secondary_color.startswith('#'):
+            org.secondary_color = secondary_color
+
+        # Handle logo file upload
+        if 'logo' in request.files:
+            logo_file = request.files['logo']
+            if logo_file and logo_file.filename and allowed_file(logo_file.filename):
+                # Generate unique filename
+                ext = logo_file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{org.slug}-{uuid.uuid4().hex[:8]}.{ext}"
+                filename = secure_filename(filename)
+
+                # Save to uploads folder
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'logos')
+                os.makedirs(upload_folder, exist_ok=True)
+                filepath = os.path.join(upload_folder, filename)
+                logo_file.save(filepath)
+
+                # Update org logo URL
+                org.logo_url = f"/static/uploads/logos/{filename}"
 
         create_audit_log(
             action='organization.settings_update',
             user_id=current_user.id,
             organization_id=org.id,
-            details={'changes': 'settings_updated'},
+            details={'changes': 'branding_updated'},
             ip_address=request.remote_addr
         )
 

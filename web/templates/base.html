@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI Practice Platform{% endblock %} | Patriot Tech Systems</title>
+    <title>{% block title %}{{ branding.name }}{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --patriot-primary: #1e3a5f;
-            --patriot-secondary: #2c5282;
-            --patriot-accent: #4299e1;
+            --patriot-primary: {{ branding.primary_color }};
+            --patriot-secondary: {{ branding.secondary_color }};
+            --patriot-accent: {{ branding.secondary_color }};
             --patriot-light: #ebf8ff;
-            --patriot-gradient: linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #4299e1 100%);
+            --patriot-gradient: linear-gradient(135deg, {{ branding.primary_color }} 0%, {{ branding.secondary_color }} 100%);
         }
 
         body {
@@ -509,9 +509,13 @@
 <body>
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                {% if branding.logo_url %}
+                <img src="{{ branding.logo_url }}" alt="{{ branding.name }}" style="height: 36px; margin-right: 10px;">
+                {% else %}
                 <i class="fas fa-brain me-2"></i>
-                AI Practice<span>Platform</span>
+                {% endif %}
+                <span>{{ branding.name }}</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -622,16 +626,18 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-brain me-2"></i>AI Practice Platform</h5>
-                    <p class="mb-0">By Patriot Tech Systems Consulting LLC</p>
+                    {% if branding.logo_url %}
+                    <img src="{{ branding.logo_url }}" alt="{{ branding.name }}" style="height: 32px; margin-bottom: 10px; filter: brightness(0) invert(1);">
+                    {% endif %}
+                    <h5>{{ branding.name }}</h5>
                     <p class="small text-light opacity-75">Enterprise AI readiness, strategy, and implementation solutions.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-1">
-                        <a href="mailto:info@patriottechsystems.com">info@patriottechsystems.com</a>
+                    <p class="mb-1 small">
+                        Powered by <a href="{{ branding.powered_by_url }}" target="_blank">{{ branding.powered_by }}</a>
                     </p>
                     <p class="mb-0">
-                        <a href="https://www.patriottechsystems.com" target="_blank">www.patriottechsystems.com</a>
+                        <a href="mailto:info@patriottechsystems.com">info@patriottechsystems.com</a>
                     </p>
                 </div>
             </div>

@@ -177,6 +177,48 @@ governance_builder = GovernanceFrameworkBuilder()
 ethics_builder = EthicsFrameworkBuilder()
 mlops_builder = MLOpsFrameworkBuilder()
 data_strategy_builder = DataStrategyBuilder()
+
+
+# =============================================================================
+# BRANDING CONTEXT PROCESSOR
+# =============================================================================
+
+# Default Patriot Tech branding
+DEFAULT_BRANDING = {
+    'name': 'AI Practice Platform',
+    'logo_url': '/static/images/patriot-logo.svg',
+    'primary_color': '#0066FF',
+    'secondary_color': '#00D4AA',
+    'powered_by': 'Patriot Tech Systems Consulting LLC',
+    'powered_by_url': 'https://www.patriottechsystems.com'
+}
+
+
+@app.context_processor
+def inject_branding():
+    """Inject branding variables into all templates."""
+    from flask_login import current_user
+
+    branding = DEFAULT_BRANDING.copy()
+
+    # If user is logged in and has an organization, use their branding
+    if current_user and hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+        org = current_user.organization
+        if org:
+            # Only apply custom branding for professional/enterprise plans
+            if org.plan in ['professional', 'enterprise']:
+                if org.logo_url:
+                    branding['logo_url'] = org.logo_url
+                if org.primary_color:
+                    branding['primary_color'] = org.primary_color
+                if org.secondary_color:
+                    branding['secondary_color'] = org.secondary_color
+                branding['name'] = org.name
+            else:
+                # Starter plan: just show org name but keep Patriot branding
+                branding['name'] = org.name
+
+    return {'branding': branding}
 roadmap_engine = AIRoadmapEngine()
 use_case_prioritizer = UseCasePrioritizer()
 

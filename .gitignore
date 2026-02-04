@@ -84,3 +84,7 @@ docker-compose.override.yml
 # Screenshots (keep directory, ignore images)
 screenshots/*
 !screenshots/.gitkeep
+
+# Uploaded logos (keep directory, ignore uploads)
+web/static/uploads/logos/*
+!web/static/uploads/logos/.gitkeep
