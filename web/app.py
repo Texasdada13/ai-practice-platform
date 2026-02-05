@@ -1199,43 +1199,69 @@ def documents_page():
 @limiter.limit("5 per minute")
 def generate_document():
     """Generate a document"""
-    data = request.json
-    doc_type = DocumentType(data.get('type', 'executive_summary'))
-    custom_requirements = data.get('custom_requirements')
+    try:
+        data = request.json or {}
 
-    assessment_id = session.get('assessment_id')
-    organization = session.get('organization', 'Organization')
-    sector = session.get('sector', 'general')
+        # Validate document type
+        doc_type_str = data.get('type', 'executive_summary')
+        try:
+            doc_type = DocumentType(doc_type_str)
+        except ValueError:
+            return jsonify({
+                'error': f'Invalid document type: {doc_type_str}',
+                'code': 'INVALID_DOC_TYPE'
+            }), 400
 
-    assessment_result = None
-    if assessment_id and assessment_id in assessments_db:
-        assessment_result = assessments_db[assessment_id].get('result')
+        custom_requirements = data.get('custom_requirements')
 
-    doc_generator = get_document_generator()
-    document = doc_generator.generate(
-        doc_type=doc_type,
-        organization_name=organization,
-        assessment_result=assessment_result,
-        sector=sector,
-        custom_requirements=custom_requirements
-    )
+        assessment_id = session.get('assessment_id')
+        organization = session.get('organization', 'Organization')
+        sector = session.get('sector', 'general')
 
-    # Store document
-    doc_id = str(uuid.uuid4())
-    documents_db[doc_id] = document
+        assessment_result = None
+        if assessment_id and assessment_id in assessments_db:
+            assessment_result = assessments_db[assessment_id].get('result')
 
-    # Audit log for document generation
-    log_action('document.create', 'document', doc_id,
-               {'doc_type': doc_type.value, 'word_count': document.word_count})
+        # Check if Claude API is available
+        doc_generator = get_document_generator()
+        if not doc_generator.claude.is_available():
+            logger.warning("Document generation attempted but Claude API is unavailable")
+            return jsonify({
+                'error': 'AI document generation is currently unavailable. Please ensure the ANTHROPIC_API_KEY is configured.',
+                'code': 'API_UNAVAILABLE'
+            }), 503
 
-    return jsonify({
-        'id': doc_id,
-        'title': document.title,
-        'content': document.content,
-        'word_count': document.word_count,
-        'sections': document.sections,
-        'generated_at': document.generated_at.isoformat()
-    })
+        document = doc_generator.generate(
+            doc_type=doc_type,
+            organization_name=organization,
+            assessment_result=assessment_result,
+            sector=sector,
+            custom_requirements=custom_requirements
+        )
+
+        # Store document
+        doc_id = str(uuid.uuid4())
+        documents_db[doc_id] = document
+
+        # Audit log for document generation
+        log_action('document.create', 'document', doc_id,
+                   {'doc_type': doc_type.value, 'word_count': document.word_count})
+
+        return jsonify({
+            'id': doc_id,
+            'title': document.title,
+            'content': document.content,
+            'word_count': document.word_count,
+            'sections': document.sections,
+            'generated_at': document.generated_at.isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error generating document: {str(e)}")
+        return jsonify({
+            'error': 'Failed to generate document. Please try again later.',
+            'code': 'GENERATION_ERROR',
+            'details': str(e) if app.debug else None
+        }), 500
 
 
 @app.route('/api/documents/<doc_id>/download')

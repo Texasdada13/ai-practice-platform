@@ -270,7 +270,11 @@ async function generateDocument(docType) {
         addToHistory(response);
     } catch (error) {
         console.error('Failed to generate document:', error);
-        alert('Failed to generate document. Please try again.');
+        let errorMsg = error.message || 'Failed to generate document. Please try again.';
+        if (error.code === 'API_UNAVAILABLE') {
+            errorMsg = 'AI document generation is currently unavailable. The system administrator needs to configure the AI API key.';
+        }
+        alert(errorMsg);
     } finally {
         document.getElementById('loadingCard').style.display = 'none';
     }
