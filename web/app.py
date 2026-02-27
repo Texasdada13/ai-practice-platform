@@ -22,6 +22,8 @@ from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from patriot_ui import init_ui
+from patriot_ui.config import NavItem, NavSection
 
 # Add src and web to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -144,6 +146,30 @@ app.register_blueprint(portal_bp)
 # Register SSO blueprint and initialize OAuth
 app.register_blueprint(sso_bp)
 init_sso(app)
+
+# Initialize Patriot UI Kit
+init_ui(app,
+    product_name="AI Practice Platform",
+    product_icon="bi-brain",
+    show_org_selector=False,
+    nav_sections=[
+        NavSection("Overview", [
+            NavItem("Dashboard", "bi-speedometer2", "/dashboard"),
+            NavItem("AI Chat", "bi-chat-dots", "/chat"),
+        ]),
+        NavSection("Build", [
+            NavItem("Assessment", "bi-clipboard-check", "/assessment"),
+            NavItem("Frameworks", "bi-diagram-3", "/frameworks"),
+            NavItem("Roadmap", "bi-signpost-split", "/roadmap"),
+            NavItem("Use Cases", "bi-lightbulb", "/use-cases"),
+            NavItem("Documents", "bi-file-earmark-text", "/documents"),
+        ]),
+        NavSection("Track", [
+            NavItem("Results", "bi-graph-up", "/results"),
+            NavItem("History", "bi-clock-history", "/history"),
+        ]),
+    ]
+)
 
 # Security: CSRF Protection
 csrf = CSRFProtect(app)
